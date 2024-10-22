@@ -1,0 +1,38 @@
+{% extends 'base.html' %} {% block content %}
+<div class="position-relative w-100">
+  <img
+    src="{{ url_for('static', filename='images/hero.jpg') }}"
+    class="w-100 img-fluid"
+    alt="Hero Image"
+    style="top: 0; left: 0; width: 100%; height: auto"
+  />
+  <div
+    class="position-absolute top-50 start-50 translate-middle text-center text-white"
+  >
+    <h1 class="text-light hero-text">Fresh Harvest Veggie</h1>
+    <button
+      type="button"
+      class="btn btn-light p-2 mt-4"
+    >
+      Shop Now
+    </button>
+  </div>
+</div>
+<div class="">
+  {% for veg in veggie %}
+  <a href="{{ url_for('item', id=veg.id) }}">{{veg.vegName}}</a>
+
+  <img
+    src="{{ url_for('static', filename=veg.img_src) }}"
+    alt="{{ veg.vegName }}"
+  />
+  {% endfor %}
+</div>
+{% endblock %}
+<script>
+  // Wait for the page and video to load before adjusting the playback rate
+  document.addEventListener('DOMContentLoaded', function () {
+    const video = document.querySelector('video')
+    video.playbackRate = 0.1 // Adjust playback speed here
+  })
+</script>

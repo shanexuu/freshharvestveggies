@@ -1,0 +1,10 @@
+{% extends 'base.html' %} {% block content %}
+<div class="table-container">
+  <h1>Vegetable Details</h1>
+
+  <img
+    src="{{ url_for('static', filename=veggie.img_src) }}"
+    alt="{{ veggie.vegName }}"
+  />
+</div>
+{% endblock %}
