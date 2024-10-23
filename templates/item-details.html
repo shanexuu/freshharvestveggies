@@ -1,10 +1,15 @@
-{% extends 'base.html' %} {% block content %}
-<div class="table-container">
-  <h1>Vegetable Details</h1>
-
-  <img
-    src="{{ url_for('static', filename=veggie.img_src) }}"
-    alt="{{ veggie.vegName }}"
-  />
+{% extends 'base-full.html' %} {% block content %}
+<div class="container mt-5">
+  <h5>Product Details</h5>
+  <div class="d-flex gap-5 mt-5">
+    <img
+      src="{{ url_for('static', filename=veggie.img_src) }}"
+      alt="{{ veggie.vegName }}"
+    />
+    <div>
+      <h3>{{ veggie.vegName }}</h3>
+      <h5>Price: {{ price }} {{ unit }}</h5>
+    </div>
+  </div>
 </div>
 {% endblock %}

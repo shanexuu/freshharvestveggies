@@ -1,4 +1,12 @@
 /* Ensure the form container takes full width */
+body {
+  font-family: 'Montserrat', sans-serif !important;
+  background: #ffffeb !important;
+}
+a,
+p {
+  color: #2d2f0c !important;
+}
 .form-title {
   width: 100%;
   text-align: center;
@@ -180,4 +188,27 @@ video {
 }
 .hero-text {
   font-size: 5rem;
+}
+.header {
+  background-color: #2d2f0c;
+}
+.navbar-fixed-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%; /* Full width */
+  z-index: 999;
+}
+
+.nav-line {
+  color: #f9f9f9;
+}
+
+.footer {
+  background-color: #e1e686;
+}
+.footer p,
+.footer a,
+.footer h5 {
+  color: #2d2f0c;
 }

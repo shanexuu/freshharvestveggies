@@ -6,7 +6,13 @@ db = SQLAlchemy()
 class Item(db.Model):
     __tablename__ = 'item'
     id = Column(Integer, primary_key=True)
-    img_src = Column(String(255), nullable=False)
+    img_src = Column(String(255))
+    type = Column(String(50)) 
+    
+    __mapper_args__ = {
+        'polymorphic_on': type,  
+        'polymorphic_identity': 'item' 
+    }
 
     def __init__(self, img_src):
         self.img_src = img_src

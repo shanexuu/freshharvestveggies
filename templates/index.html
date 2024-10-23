@@ -2,14 +2,14 @@
 <div class="position-relative w-100">
   <img
     src="{{ url_for('static', filename='images/hero.jpg') }}"
-    class="w-100 img-fluid"
+    class="w-100 object-fit-cover"
     alt="Hero Image"
     style="top: 0; left: 0; width: 100%; height: auto"
   />
   <div
     class="position-absolute top-50 start-50 translate-middle text-center text-white"
   >
-    <h1 class="text-light hero-text">Fresh Harvest Veggie</h1>
+    <h1 class="text-light hero-text">Fresh Harvest Veggies</h1>
     <button
       type="button"
       class="btn btn-light p-2 mt-4"
@@ -18,16 +18,40 @@
     </button>
   </div>
 </div>
-<div class="">
-  {% for veg in veggie %}
-  <a href="{{ url_for('item', id=veg.id) }}">{{veg.vegName}}</a>
+<div class="container">
+  <h1
+    class="text-center mt-5 mb-5 pt-5 pb-5 fw-semibold"
+    style="color: #2d2f0c"
+  >
+    Only the Highest Veggies
+  </h1>
+  <div class="row mt-5">
+    {% for veg in veggie %}
+    <div class="col-12 col-sm-4 mb-4 text-center">
+      <!-- Each column takes up 4 of 12 columns on small screens and above -->
+      <div class="d-flex flex-column align-items-center">
+        <a href="{{ url_for('item', id=veg.id) }}"
+          ><img
+            src="{{ url_for('static', filename=veg.img_src) }}"
+            alt="{{ veg.vegName }}"
+            class="img-fluid"
+            style="width: 300px; height: auto"
+        /></a>
 
-  <img
-    src="{{ url_for('static', filename=veg.img_src) }}"
-    alt="{{ veg.vegName }}"
-  />
-  {% endfor %}
+        <a
+          href="{{ url_for('item', id=veg.id) }}"
+          class="mt-3 text-decoration-none fw-semibold"
+          style="color: #2d2f0c"
+          >{{ veg.vegName }}</a
+        >
+      </div>
+    </div>
+
+    {% if loop.index % 3 == 0 and not loop.last %}
+  </div>
+  <div class="row">{% endif %} {% endfor %}</div>
 </div>
+
 {% endblock %}
 <script>
   // Wait for the page and video to load before adjusting the playback rate

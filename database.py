@@ -56,18 +56,53 @@ class Item(Base):
     __tablename__ = 'item'
     id = Column(Integer, primary_key=True)
     img_src = Column(String(255))
+    type = Column(String(50)) 
+
+    __mapper_args__ = {
+        'polymorphic_on': type,  
+        'polymorphic_identity': 'item'  
+    }
+
+    def __init__(self, img_src):
+        self.img_src = img_src
+
 
 class Veggie(Item):
     __tablename__ = 'veggie'
-    id = Column(Integer, ForeignKey('item.id'), primary_key=True)
-    vegName = Column(String(50))
+    id = Column(Integer, ForeignKey('item.id'), primary_key=True)  
+    vegName = Column(String(50), nullable=False)
+    vegType = Column(String(50))
+    unit = Column(String(50))
+
+    __mapper_args__ = {
+        'polymorphic_on': 'vegType', 
+        'polymorphic_identity': 'veggie',
+    }
+
+    def __init__(self, img_src, vegName, unit):
+        super().__init__(img_src=img_src)
+        self.vegName = vegName
+        self.unit = unit
+        self.type = 'viggie'
 
 class PremadeBox(Item):
     __tablename__ = 'premadebox'
     id = Column(Integer, ForeignKey('item.id'), primary_key=True)
-    boxSize = Column(String(50))
+    boxSize = Column(String(255))
     numOfBoxes = Column(Integer)
     boxContent = Column(String(255))
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'premadebox',
+    }
+
+    def __init__(self, img_src, boxSize, numOfBoxes, boxContent):
+        super().__init__(img_src=img_src)
+        self.boxSize = boxSize
+        self.numOfBoxes = numOfBoxes
+        self.boxContent = boxContent
+
+        
 
 class Payment(Base):
     __tablename__ = 'payment'
@@ -99,21 +134,50 @@ class DebitCardPayment(Payment):
 
 class WeightedVeggie(Veggie):
     __tablename__ = 'weightedveggie'
-    id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)
-    weight = Column(Float)
-    weightPerKilo = Column(Float)
+    id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
+    weightUnit = Column(Float)
+    pricePerWeight = Column(Float)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'weightedveggie', 
+    }
+
+    def __init__(self, img_src, vegName, unit, weightUnit, pricePerWeight):
+        super().__init__(img_src=img_src, vegName=vegName, unit=unit)
+        self.vegType = 'weightedveggie'
+        self.weightUnit = weightUnit
+        self.pricePerWeight = pricePerWeight
 
 class PackVeggie(Veggie):
     __tablename__ = 'packveggie'
-    id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)
-    numOfPack = Column(Integer)
+    id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
+    pack=Column(Float)
     pricePerPack = Column(Float)
+    __mapper_args__ = {
+        'polymorphic_identity': 'packveggie',
+    }
+
+    def __init__(self, img_src, vegName, unit, pack, pricePerPack):
+        super().__init__(img_src=img_src, vegName=vegName, unit=unit)
+        self.vegType = 'packveggie'
+        self.pack = pack
+        self.pricePerPack = pricePerPack
 
 class UnitPriceVeggie(Veggie):
     __tablename__ = 'unitpriceveggie'
-    id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)
+    id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
+    vegUnit=Column(Float)
     pricePerUnit = Column(Float)
-    quantity = Column(Integer)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'unitpriceveggie',
+    }
+
+    def __init__(self, img_src, vegName, unit, vegUnit, pricePerUnit):
+        super().__init__(img_src=img_src, vegName=vegName, unit=unit)
+        self.vegType = 'unitpriceveggie'
+        self.vegUnit= vegUnit
+        self.pricePerUnit = pricePerUnit
 
 
 
@@ -129,46 +193,38 @@ session = Session()
 person1 = Person(firstName="John", lastName="Doe", password="password123", username="johndoe")
 person2 = Person(firstName="Jane", lastName="Smith", password="password456", username="janesmith")
 
-staff1 = Staff(firstName="Alice", lastName="Johnson", password="password789", username="alicej", 
-               dateJoined=date(2022, 1, 15), deptName="Sales", listOfCustomers="Customer1, Customer2", 
-               listOfOrders="Order1, Order2", premadeBoxes="Box1, Box2", staffID=1, veggies="Carrot, Potato")
+staff1 = Staff(firstName="Alice", lastName="Johnson", password="password789", username="alicej", dateJoined=date(2022, 1, 15), deptName="Sales", listOfCustomers="Customer1, Customer2", listOfOrders="Order1, Order2", premadeBoxes="Box1, Box2", staffID=1, veggies="Carrot, Potato")
 
-customer1 = Customer(firstName="Bob", lastName="Brown", password="password654", username="bobb", 
-                     custAddress="123 Main St", custBalance=100.0, custID=1, maxOwing=50.0)
+customer1 = Customer(firstName="Bob", lastName="Brown", password="password654", username="bobb", custAddress="123 Main St", custBalance=100.0, custID=1, maxOwing=50.0)
 
-corporate_customer1 = CorporateCustomer(firstName="Corp", lastName="Inc", password="corp_password", 
-                                        username="corp_user", custAddress="456 Corporate Blvd", 
-                                        custBalance=500.0, custID=2, maxOwing=200.0, discountRate=10.0, 
-                                        maxCredit=1000.0, minBalance=50.0)
+corporate_customer1 = CorporateCustomer(firstName="Corp", lastName="Inc", password="corp_password", username="corp_user", custAddress="456 Corporate Blvd", custBalance=500.0, custID=2, maxOwing=200.0, discountRate=10.0, maxCredit=1000.0, minBalance=50.0)
 
 # Add test data for Orders and OrderLine
 order1 = Order(orderCustomer=customer1.id, orderDate=date(2023, 5, 20), orderNumber=12345, orderStatus="Pending")
 orderline1 = OrderLine(order=order1, itemNumber=1)
 
 # Add test data for Items, Veggies, and PremadeBox
-item1 = Item(img_src="images/Carrots.jpg")
-veggie1 = Veggie(img_src="images/Carrots.jpg", vegName="Carrot")
-premade_box1 = PremadeBox(img_src="images/Carrots.jpg", boxSize="Large", numOfBoxes=10, boxContent="Carrots, Potatoes")
 
-weighted_veggie1 = WeightedVeggie(img_src="images/Carrots.jpg",vegName="Carrot", weight=2.5, weightPerKilo=4.0)
-pack_veggie1 = PackVeggie(img_src="images/Carrots.jpg",vegName="Broccoli", numOfPack=5, pricePerPack=10.0)
-unit_price_veggie1 = UnitPriceVeggie(img_src="images/Carrots.jpg",vegName="Tomato", pricePerUnit=0.5, quantity=20)
+
+premade_box1 = PremadeBox(img_src="images/PremadeBox.jpg", boxSize="Large", numOfBoxes=10, boxContent="Carrots, Potatoes")
+
+weighted_veggie1 = WeightedVeggie(img_src="images/Galic.jpg",vegName="Galic", unit='kg', weightUnit=10, pricePerWeight=9.99)
+weighted_veggie2 = WeightedVeggie(img_src="images/Tomatos.jpg",vegName="Tomatos", unit='kg',weightUnit=10,  pricePerWeight=5.99)
+pack_veggie1 = PackVeggie(img_src="images/Eggplant.jpg",vegName="Eggplant", unit='bag', pack=10, pricePerPack=10.0)
+unit_price_veggie1 = UnitPriceVeggie(img_src="images/Squash.jpg",vegName="Squash", unit='ea', pricePerUnit=0.5, vegUnit=20)
+unit_price_veggie2 = UnitPriceVeggie(img_src="images/Broccoli.jpg",vegName="Broccoli", unit='ea', pricePerUnit=2.99, vegUnit=20)
+unit_price_veggie3 = UnitPriceVeggie(img_src="images/Avocado.jpg",vegName="Avocado", unit='ea', pricePerUnit=1.19, vegUnit=20)
 
 # Add test data for Payments and Payment types
 payment1 = Payment(paymentAmount=100.0, paymentDate=date(2023, 5, 21), paymentID=1, customer_id=customer1.id)
-credit_card_payment1 = CreditCardPayment(paymentAmount=100.0, paymentDate=date(2023, 5, 21), 
-                                         paymentID=2, customer_id=customer1.id, cardExpiryDate=date(2025, 12, 31), 
-                                         cardNumber="1234567890123456", cardType="Visa")
+credit_card_payment1 = CreditCardPayment(paymentAmount=100.0, paymentDate=date(2023, 5, 21), paymentID=2, customer_id=customer1.id, cardExpiryDate=date(2025, 12, 31), cardNumber="1234567890123456", cardType="Visa")
 
-debit_card_payment1 = DebitCardPayment(paymentAmount=150.0, paymentDate=date(2023, 6, 15), 
-                                       paymentID=3, customer_id=corporate_customer1.id, bankName="Bank XYZ", 
-                                       debitCardNumber="9876543210987654")
+debit_card_payment1 = DebitCardPayment(paymentAmount=150.0, paymentDate=date(2023, 6, 15), paymentID=3,customer_id=corporate_customer1.id, bankName="Bank XYZ", debitCardNumber="9876543210987654")
 
 # Add all the objects to the session
 session.add_all([
     person1, person2, staff1, customer1, corporate_customer1,
-    order1, orderline1, item1, veggie1, premade_box1, weighted_veggie1, 
-    pack_veggie1, unit_price_veggie1, payment1, credit_card_payment1, debit_card_payment1
+    order1, orderline1, premade_box1, weighted_veggie1, weighted_veggie2, pack_veggie1, unit_price_veggie1, unit_price_veggie2, unit_price_veggie3, payment1, credit_card_payment1, debit_card_payment1
 ])
 
 # Commit the session to save the objects to the database
@@ -180,5 +236,3 @@ session.close()
 print("Test data successfully added.")
 
 
-
-# Close the session
