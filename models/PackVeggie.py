@@ -8,7 +8,7 @@ class PackVeggie(Veggie):
     
     __tablename__ = 'packveggie'
     id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
-    pack=Column(Float)
+    pack=Column(Integer)
     pricePerPack = Column(Float)
 
     __mapper_args__ = {

@@ -1,0 +1,46 @@
+{% extends 'base-full.html' %} {% block content %}
+<div class="container mt-5">
+  <h3 class="fw-semibold">Account</h3>
+  <p>Welcome back, {{ name }}</p>
+  <div class="row g-5">
+    <div class="col-md-5 col-lg-3">
+      <ul class="list-group mb-3">
+        <li
+          class="list-group-item d-flex justify-content-between lh-sm p-3 active"
+        >
+          <div>
+            <a
+              class="my-0 fw-semibold"
+              href="{{ url_for('dashboard') }}"
+              >Account overview</a
+            >
+          </div>
+        </li>
+
+        <li class="list-group-item d-flex justify-content-between lh-sm p-3">
+          <div>
+            <a
+              class="my-0 fw-medium"
+              href="{{ url_for('profile') }}"
+              >My details</a
+            >
+          </div>
+        </li>
+        <li class="list-group-item d-flex justify-content-between lh-sm p-3">
+          <div>
+            <a
+              class="my-0 fw-medium"
+              href="{{ url_for('logout') }}"
+              >Logout</a
+            >
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="col-md-7 col-lg-9">
+      <h5 class="fw-semibold">Order History</h5>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

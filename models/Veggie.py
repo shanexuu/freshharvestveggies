@@ -1,5 +1,6 @@
 from sqlalchemy import Column, String, ForeignKey, Integer
-from .Item import db, Item
+from .Item import Item
+from . import db
 
 class Veggie(Item):
     __tablename__ = 'veggie'
@@ -9,7 +10,7 @@ class Veggie(Item):
     unit = Column(String(50))
 
     __mapper_args__ = {
-        'polymorphic_on': 'vegType', 
+        'polymorphic_on': vegType, 
         'polymorphic_identity': 'veggie',
     }
 
@@ -17,7 +18,7 @@ class Veggie(Item):
         super().__init__(img_src=img_src)
         self.vegName = vegName
         self.unit = unit
-        self.type = 'viggie'
+        self.type = 'veggie'
 
     def __repr__(self):
         return f"<Veggie {self.id}: {self.vegName}, Image: {self.img_src}>"

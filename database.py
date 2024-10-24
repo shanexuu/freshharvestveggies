@@ -12,21 +12,44 @@ declarative_base()
 class Person(Base):
     __tablename__ = 'person'
     id = Column(Integer, primary_key=True)
-    firstName = Column(String(50))
-    lastName = Column(String(50))
-    password = Column(String(50))
-    username = Column(String(50))
+    firstName = Column(String(255))
+    lastName = Column(String(255))
+    password = Column(String(255))
+    username = Column(String(255))
+    type = Column(String(50)) 
+
+    __mapper_args__ = {
+        'polymorphic_on': type,  
+        'polymorphic_identity': 'person'  
+    }
+
+    def __init__(self, firstName, lastName, password, username):
+        self.firstName = firstName
+        self.lastName = lastName
+        self.password = password
+        self.username= username
 
 class Staff(Person):
     __tablename__ = 'staff'
     id = Column(Integer, ForeignKey('person.id'), primary_key=True)
     dateJoined = Column(Date)
     deptName = Column(String(50))
-    listOfCustomers = Column(String(255))
-    listOfOrders = Column(String(255))
-    premadeBoxes = Column(String(255))
     staffID = Column(Integer)
-    veggies = Column(String(255))
+   
+    __mapper_args__ = {
+        'polymorphic_identity': 'staff',
+    }
+
+    def __init__(self, firstName, lastName, password, username,dateJoined, deptName, staffID):
+        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username)
+        self.dateJoined = dateJoined
+        self.deptName = deptName
+        self.staffID = staffID
+        self.listOfCustomers = []
+        self.listOfOrders = []
+        self.premadeBoxes =[]
+        self.veggies = []
+        self.type = 'staff'
 
 class Customer(Person):
     __tablename__ = 'customer'
@@ -35,6 +58,22 @@ class Customer(Person):
     custBalance = Column(Float)
     custID = Column(Integer)
     maxOwing = Column(Float)
+    cusType = Column(String(50))
+
+    __mapper_args__ = {
+        'polymorphic_on': cusType, 
+        'polymorphic_identity': 'customer',
+    }
+
+    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, custID, maxOwing):
+        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username)
+        self.custAddress = custAddress
+        self.custBalance = custBalance
+        self.custID = custID
+        self.maxOwing = maxOwing
+        self.type = 'customer'
+       
+      
 
 class Order(Base):
     __tablename__ = 'order'
@@ -83,7 +122,7 @@ class Veggie(Item):
         super().__init__(img_src=img_src)
         self.vegName = vegName
         self.unit = unit
-        self.type = 'viggie'
+        self.type = 'veggie'
 
 class PremadeBox(Item):
     __tablename__ = 'premadebox'
@@ -119,6 +158,17 @@ class CorporateCustomer(Customer):
     maxCredit = Column(Float)
     minBalance = Column(Float)
 
+    __mapper_args__ = {
+        'polymorphic_identity': 'corporatecustomer', 
+    }
+
+    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, custID, maxOwing, discountRate, maxCredit, minBalance):
+        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username,custAddress=custAddress, custBalance=custBalance, custID=custID, maxOwing=maxOwing)
+        self.cusType = 'corporatecustomer'
+        self.discountRate = discountRate
+        self.maxCredit = maxCredit
+        self.minBalance = minBalance
+
 class CreditCardPayment(Payment):
     __tablename__ = 'creditcardpayment'
     id = Column(Integer, ForeignKey('payment.id'), primary_key=True)
@@ -151,7 +201,7 @@ class WeightedVeggie(Veggie):
 class PackVeggie(Veggie):
     __tablename__ = 'packveggie'
     id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
-    pack=Column(Float)
+    pack=Column(Integer)
     pricePerPack = Column(Float)
     __mapper_args__ = {
         'polymorphic_identity': 'packveggie',
@@ -166,7 +216,7 @@ class PackVeggie(Veggie):
 class UnitPriceVeggie(Veggie):
     __tablename__ = 'unitpriceveggie'
     id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
-    vegUnit=Column(Float)
+    vegUnit=Column(Integer)
     pricePerUnit = Column(Float)
 
     __mapper_args__ = {
@@ -189,15 +239,13 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# Add test data for Person, Staff, and Customer
-person1 = Person(firstName="John", lastName="Doe", password="password123", username="johndoe")
-person2 = Person(firstName="Jane", lastName="Smith", password="password456", username="janesmith")
 
-staff1 = Staff(firstName="Alice", lastName="Johnson", password="password789", username="alicej", dateJoined=date(2022, 1, 15), deptName="Sales", listOfCustomers="Customer1, Customer2", listOfOrders="Order1, Order2", premadeBoxes="Box1, Box2", staffID=1, veggies="Carrot, Potato")
 
-customer1 = Customer(firstName="Bob", lastName="Brown", password="password654", username="bobb", custAddress="123 Main St", custBalance=100.0, custID=1, maxOwing=50.0)
+staff1 = Staff(firstName="Alice", lastName="Johnson", password="1234", username="alicej", dateJoined=date(2022, 1, 15), deptName="Sales",staffID=1)
 
-corporate_customer1 = CorporateCustomer(firstName="Corp", lastName="Inc", password="corp_password", username="corp_user", custAddress="456 Corporate Blvd", custBalance=500.0, custID=2, maxOwing=200.0, discountRate=10.0, maxCredit=1000.0, minBalance=50.0)
+customer1 = Customer(firstName="Bob", lastName="Brown", password="1234", username="bobb", custAddress="123 Main St", custBalance=100.0, custID=1, maxOwing=50.0)
+
+corporate_customer1 = CorporateCustomer(firstName="Shane", lastName="Xu", password="1234", username="foliageandvine", custAddress="456 Corporate Blvd", custBalance=500.0, custID=2, maxOwing=200.0, discountRate=10.0, maxCredit=1000.0, minBalance=50.0)
 
 # Add test data for Orders and OrderLine
 order1 = Order(orderCustomer=customer1.id, orderDate=date(2023, 5, 20), orderNumber=12345, orderStatus="Pending")
@@ -208,12 +256,12 @@ orderline1 = OrderLine(order=order1, itemNumber=1)
 
 premade_box1 = PremadeBox(img_src="images/PremadeBox.jpg", boxSize="Large", numOfBoxes=10, boxContent="Carrots, Potatoes")
 
-weighted_veggie1 = WeightedVeggie(img_src="images/Galic.jpg",vegName="Galic", unit='kg', weightUnit=10, pricePerWeight=9.99)
-weighted_veggie2 = WeightedVeggie(img_src="images/Tomatos.jpg",vegName="Tomatos", unit='kg',weightUnit=10,  pricePerWeight=5.99)
-pack_veggie1 = PackVeggie(img_src="images/Eggplant.jpg",vegName="Eggplant", unit='bag', pack=10, pricePerPack=10.0)
-unit_price_veggie1 = UnitPriceVeggie(img_src="images/Squash.jpg",vegName="Squash", unit='ea', pricePerUnit=0.5, vegUnit=20)
-unit_price_veggie2 = UnitPriceVeggie(img_src="images/Broccoli.jpg",vegName="Broccoli", unit='ea', pricePerUnit=2.99, vegUnit=20)
-unit_price_veggie3 = UnitPriceVeggie(img_src="images/Avocado.jpg",vegName="Avocado", unit='ea', pricePerUnit=1.19, vegUnit=20)
+weighted_veggie1 = WeightedVeggie(img_src="images/Galic.jpg",vegName="Galic", unit='g', weightUnit=500, pricePerWeight=9.99)
+weighted_veggie2 = WeightedVeggie(img_src="images/Tomatos.jpg",vegName="Tomatos", unit='kg',weightUnit=1,  pricePerWeight=5.99)
+pack_veggie1 = PackVeggie(img_src="images/Eggplant.jpg",vegName="Eggplant", unit='bag', pack=1, pricePerPack=4.99)
+unit_price_veggie1 = UnitPriceVeggie(img_src="images/Squash.jpg",vegName="Squash", unit='ea', pricePerUnit=0.5, vegUnit=1)
+unit_price_veggie2 = UnitPriceVeggie(img_src="images/Broccoli.jpg",vegName="Broccoli", unit='ea', pricePerUnit=2.99, vegUnit=1)
+unit_price_veggie3 = UnitPriceVeggie(img_src="images/Avocado.jpg",vegName="Avocado", unit='ea', pricePerUnit=1.19, vegUnit=1)
 
 # Add test data for Payments and Payment types
 payment1 = Payment(paymentAmount=100.0, paymentDate=date(2023, 5, 21), paymentID=1, customer_id=customer1.id)
@@ -222,8 +270,7 @@ credit_card_payment1 = CreditCardPayment(paymentAmount=100.0, paymentDate=date(2
 debit_card_payment1 = DebitCardPayment(paymentAmount=150.0, paymentDate=date(2023, 6, 15), paymentID=3,customer_id=corporate_customer1.id, bankName="Bank XYZ", debitCardNumber="9876543210987654")
 
 # Add all the objects to the session
-session.add_all([
-    person1, person2, staff1, customer1, corporate_customer1,
+session.add_all([staff1, customer1, corporate_customer1,
     order1, orderline1, premade_box1, weighted_veggie1, weighted_veggie2, pack_veggie1, unit_price_veggie1, unit_price_veggie2, unit_price_veggie3, payment1, credit_card_payment1, debit_card_payment1
 ])
 

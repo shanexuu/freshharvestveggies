@@ -54,6 +54,12 @@
     ></script>
 
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <link
+      rel="icon"
+      type="image/x-icon"
+      href="../static/images/favicon.ico"
+    />
   </head>
   <body>
     <!-- Navigation Bar -->
@@ -68,12 +74,12 @@
         >
         <a
           class="nav-link text-light fw-semibold"
-          href="#"
+          href="{{ url_for('shop') }}"
           >Shop</a
         >
         <a
           class="nav-link text-light fw-semibold"
-          href="#"
+          href="{{ url_for('premadeBox') }}"
           >Premade Box</a
         >
       </div>
@@ -91,16 +97,49 @@
 
       <!-- Right Nav -->
       <div class="nav d-flex justify-content-center flex-grow-1">
+        {% if name %}
+        <a
+          class="nav-link fw-semibold text-light dropdown-toggle"
+          href="{{ url_for('dashboard') }}"
+          data-bs-toggle="dropdown"
+          aria-expanded="false"
+          >Hi, {{ name }}
+        </a>
+        <ul class="dropdown-menu">
+          <li>
+            <a
+              class="dropdown-item"
+              href="{{ url_for('logout') }}"
+              >Sign out</a
+            >
+          </li>
+          <li>
+            <a
+              class="dropdown-item"
+              href="{{ url_for('dashboard') }}"
+              >Account</a
+            >
+          </li>
+        </ul>
+
+        {% else %}
         <a
           class="nav-link text-light fw-semibold"
-          href="#"
-          >Login</a
-        >
+          href="{{ url_for('login') }}"
+          ><i
+            class="bi bi-person-circle"
+            style="font-size: 1.2rem"
+          ></i
+        ></a>
+        {% endif %}
         <a
           class="nav-link text-light fw-semibold"
-          href="#"
-          >Cart</a
-        >
+          href="{{ url_for('cart') }}"
+          ><i
+            class="bi bi-basket-fill"
+            style="font-size: 1.2rem"
+          ></i
+        ></a>
       </div>
     </div>
 

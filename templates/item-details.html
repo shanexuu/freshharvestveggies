@@ -1,15 +1,19 @@
 {% extends 'base-full.html' %} {% block content %}
 <div class="container mt-5">
   <h5>Product Details</h5>
-  <div class="d-flex gap-5 mt-5">
-    <img
-      src="{{ url_for('static', filename=veggie.img_src) }}"
-      alt="{{ veggie.vegName }}"
-    />
-    <div>
-      <h3>{{ veggie.vegName }}</h3>
-      <h5>Price: {{ price }} {{ unit }}</h5>
+  <form method="POST">
+    <div class="d-flex gap-5 mt-5">
+      <img
+        src="{{ url_for('static', filename=veggie.img_src) }}"
+        alt="{{ veggie.vegName }}"
+      />
+      <div>
+        <h1 class="fw-semibold">{{ veggie.vegName }}</h1>
+        <p>${{ price }} / {{ perUnit }} {{ unit }}</p>
+        <h1 class="fw-semibold">${{ price }}</h1>
+        <a href="{{ url_for('cart') }}"><button>Add to cart</button></a>
+      </div>
     </div>
-  </div>
+  </form>
 </div>
 {% endblock %}

@@ -7,7 +7,7 @@ from .Veggie import Veggie
 class UnitPriceVeggie(Veggie):
     __tablename__ = 'unitpriceveggie'
     id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
-    vegUnit=Column(Float)
+    vegUnit=Column(Integer)
     pricePerUnit = Column(Float)
 
     __mapper_args__ = {

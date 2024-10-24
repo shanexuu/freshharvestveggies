@@ -1,12 +1,12 @@
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Column, Integer, String
 
-db = SQLAlchemy()
+from . import db
 
 class Item(db.Model):
     __tablename__ = 'item'
     id = Column(Integer, primary_key=True)
     img_src = Column(String(255))
+    
     type = Column(String(50)) 
     
     __mapper_args__ = {

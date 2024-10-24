@@ -1,41 +1,43 @@
-from Customer import Customer
+from sqlalchemy import Column, String, ForeignKey, Integer, Date, Float
+from .Customer import db, Customer
+from sqlalchemy.orm import relationship
+
 
 
 class CorporateCustomer(Customer):
-    def __init__(self, name: str, contact_info: str, balance: float, credit_limit: float) -> None:
-        """
-        Initialize a Corporate Customer.
-        :param name: Name of the corporate customer
-        :param contact_info: Contact information of the corporate customer
-        :param balance: Corporate customer's account balance
-        :param credit_limit: Credit limit for the corporate customer
-        """
-        super().__init__(name, contact_info, balance)
-        self.__credit_limit = credit_limit
+    __tablename__ = 'corporatecustomer'
+    id = Column(Integer, ForeignKey('customer.id'), primary_key=True)
+    discountRate = Column(Float)
+    maxCredit = Column(Float)
+    minBalance = Column(Float)
 
-    @property
-    def credit_limit(self) -> float:
-        """Return the corporate customer's credit limit."""
-        return self.__credit_limit
-    
-    def is_private(self) -> bool:
-        return False
+    __mapper_args__ = {
+        'polymorphic_identity': 'corporatecustomer', 
+    }
 
-    def is_corporate(self) -> bool:
-        return True
+    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, custID, maxOwing, discountRate, maxCredit, minBalance):
+        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username,custAddress=custAddress, custBalance=custBalance, custID=custID, maxOwing=maxOwing)
+        self.cusType = 'corporatecustomer'
+        self.discountRate = discountRate
+        self.maxCredit = maxCredit
+        self.minBalance = minBalance
     
 
-    def can_place_order(self, amount: float) -> bool:
-        """Check if the corporate customer can place an order.
-        Corporate customers cannot place an order if their balance is greater than their credit limit.
-        return True if they can place an order, False otherwise
+    # Method to display corporate customer profile
+    def display_profile(self):
         """
-        return self.balance <= self.__credit_limit
+        Returns the profile data for the corporate customer to be rendered.
+        """
+        profile_data = {
+            'name': f"{self.firstName} {self.lastName}",
+            'address': self.custAddress,
+            'balance': self.custBalance,
+            'maxOwing': self.maxOwing,
+            'discountRate': self.discountRate,
+            'maxCredit': self.maxCredit,
+            'minBalance': self.minBalance,
+          
+        }
+        return profile_data
 
-    def apply_discount(self, amount: float) -> float:
-        """Corporate customers get a 10% discount on each order."""
-        return amount * 0.9 
-
-    def get_details(self) -> str:
-        """Return details about the corporate customer."""
-        return f"Corporate Customer: {self.name}, Balance: {self.balance}, Credit Limit: {self.__credit_limit}"
+   
