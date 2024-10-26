@@ -6,7 +6,6 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
 from models import db 
 from models.Item import Item 
 from models.Veggie import Veggie 
-
 from models.PackVeggie import PackVeggie 
 from models.WeightedVeggie import WeightedVeggie
 from models.UnitPriceVeggie import UnitPriceVeggie
@@ -15,6 +14,8 @@ from sqlalchemy.orm import sessionmaker
 from models.Staff import Staff
 from models.Customer import Customer
 from models.CorporateCustomer import CorporateCustomer
+from models.Order import Order
+
 
 
 basedir = os.path.abspath(os.path.dirname(__file__))
@@ -28,8 +29,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:wsXY6205506@localh
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
-
-
 
 
 @app.route("/")
@@ -143,19 +142,36 @@ def cart():
     name = session.get('firstName')
     return render_template('cart.html', name=name)
 
+
+
+@app.route('/order/<int:id>/', methods=['GET', 'POST'])
+def oder_detail(id):
+
+    name = session.get('firstName')
+    return render_template('cart.html', name=name)
+    
+
 @app.route("/dashboard")
 def dashboard():
 
     name = session.get('firstName')
+    user_id = session.get('id')
+
+    customer = db.session.query(Customer).get(user_id)
+
+    if not customer:
+        return "Customer not found!", 404
+    
+    order_history = Order.display_orders(customer)
 
     if 'loggedin' in session:
       user_type = session.get('type') 
       if user_type == 'staff':
           return render_template('staff-dashboard.html', name=name)
       if user_type == 'customer':
-          return render_template('customer-dashboard.html', name=name)
+          return render_template('customer-dashboard.html', name=name, order_history = order_history)
       if user_type == 'corporatecustomer':
-          return render_template('corporate-dashboard.html', name=name)
+          return render_template('corporate-dashboard.html', name=name, order_history = order_history)
       
     return redirect(url_for('index'))      
 

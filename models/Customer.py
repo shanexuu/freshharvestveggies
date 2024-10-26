@@ -1,6 +1,8 @@
 from sqlalchemy import Column, String, ForeignKey, Integer, Date, Float
+from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from .Person import db, Person
 from datetime import date
+
 
 class Customer(Person):
 
@@ -11,6 +13,8 @@ class Customer(Person):
     custID = Column(Integer)
     maxOwing = Column(Float)
     cusType = Column(String(50))
+
+    orders = relationship("Order", back_populates="customer")
 
     __mapper_args__ = {
         'polymorphic_on': cusType, 
@@ -38,3 +42,25 @@ class Customer(Person):
           
         }
         return profile_data
+    
+    # Method to display customer orders
+    def display_orders(self):
+        """
+        Returns the order details for the customer to be rendered.
+        """
+        if not self.orders:
+            return "No orders found for this customer."
+
+        order_details_list = []
+        for order in self.orders:
+            order_details = f"Order ID: {order.id}\n"
+            order_details += f"Order Date: {order.orderDate}\n"
+            order_details += f"Order Status: {order.orderStatus}\n"
+            order_details += "Items:\n"
+            
+            for order_line in order.listOfItems:
+                order_details += f"  - Item ID: {order_line.item_id}, Quantity: {order_line.quantity}\n"
+            
+            order_details_list.append(order_details)
+
+        return "\n".join(order_details_list)

@@ -29,6 +29,31 @@ class Person(Base):
         self.password = password
         self.username= username
 
+class Customer(Person):
+    __tablename__ = 'customer'
+    id = Column(Integer, ForeignKey('person.id'), primary_key=True)
+    custAddress = Column(String(255))
+    custBalance = Column(Float)
+    custID = Column(Integer)
+    maxOwing = Column(Float)
+    cusType = Column(String(50))
+
+    orders = relationship("Order", back_populates="customer")
+
+
+    __mapper_args__ = {
+        'polymorphic_on': cusType, 
+        'polymorphic_identity': 'customer',
+    }
+
+    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, custID, maxOwing):
+        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username)
+        self.custAddress = custAddress
+        self.custBalance = custBalance
+        self.custID = custID
+        self.maxOwing = maxOwing
+        self.type = 'customer'
+       
 class Staff(Person):
     __tablename__ = 'staff'
     id = Column(Integer, ForeignKey('person.id'), primary_key=True)
@@ -51,45 +76,34 @@ class Staff(Person):
         self.veggies = []
         self.type = 'staff'
 
-class Customer(Person):
-    __tablename__ = 'customer'
-    id = Column(Integer, ForeignKey('person.id'), primary_key=True)
-    custAddress = Column(String(255))
-    custBalance = Column(Float)
-    custID = Column(Integer)
-    maxOwing = Column(Float)
-    cusType = Column(String(50))
-
-    __mapper_args__ = {
-        'polymorphic_on': cusType, 
-        'polymorphic_identity': 'customer',
-    }
-
-    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, custID, maxOwing):
-        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username)
-        self.custAddress = custAddress
-        self.custBalance = custBalance
-        self.custID = custID
-        self.maxOwing = maxOwing
-        self.type = 'customer'
-       
-      
-
-class Order(Base):
-    __tablename__ = 'order'
-    id = Column(Integer, primary_key=True)
-    orderCustomer = Column(Integer, ForeignKey('customer.id'))
-    orderDate = Column(Date)
-    orderNumber = Column(Integer)
-    orderStatus = Column(String(50))
-    listOfItems = relationship("OrderLine", back_populates="order")
-
 class OrderLine(Base):
     __tablename__ = 'orderline'
     id = Column(Integer, primary_key=True)
     order_id = Column(Integer, ForeignKey('order.id'))
-    itemNumber = Column(Integer)
+    item_id = Column(Integer, ForeignKey('item.id'))
+  
+    
+    quantity = Column(Integer, nullable=False) 
     order = relationship("Order", back_populates="listOfItems")
+    item = relationship("Item")
+ 
+
+class Order(Base):
+    __tablename__ = 'order'
+    id = Column(Integer, primary_key=True)
+    customer_id = Column(Integer, ForeignKey('customer.id'))
+    orderDate = Column(Date)
+    orderStatus = Column(String(50))
+    customer = relationship('Customer', back_populates='orders')
+    listOfItems = relationship("OrderLine", back_populates="order")
+
+
+
+
+    
+
+
+      
 
 class Item(Base):
     __tablename__ = 'item'
@@ -230,8 +244,6 @@ class UnitPriceVeggie(Veggie):
         self.pricePerUnit = pricePerUnit
 
 
-
-
 # Create all tables
 Base.metadata.create_all(engine)
 
@@ -247,12 +259,6 @@ customer1 = Customer(firstName="Bob", lastName="Brown", password="1234", usernam
 
 corporate_customer1 = CorporateCustomer(firstName="Shane", lastName="Xu", password="1234", username="foliageandvine", custAddress="456 Corporate Blvd", custBalance=500.0, custID=2, maxOwing=200.0, discountRate=10.0, maxCredit=1000.0, minBalance=50.0)
 
-# Add test data for Orders and OrderLine
-order1 = Order(orderCustomer=customer1.id, orderDate=date(2023, 5, 20), orderNumber=12345, orderStatus="Pending")
-orderline1 = OrderLine(order=order1, itemNumber=1)
-
-# Add test data for Items, Veggies, and PremadeBox
-
 
 premade_box1 = PremadeBox(img_src="images/PremadeBox.jpg", boxSize="Large", numOfBoxes=10, boxContent="Carrots, Potatoes")
 
@@ -263,6 +269,9 @@ unit_price_veggie1 = UnitPriceVeggie(img_src="images/Squash.jpg",vegName="Squash
 unit_price_veggie2 = UnitPriceVeggie(img_src="images/Broccoli.jpg",vegName="Broccoli", unit='ea', pricePerUnit=2.99, vegUnit=1)
 unit_price_veggie3 = UnitPriceVeggie(img_src="images/Avocado.jpg",vegName="Avocado", unit='ea', pricePerUnit=1.19, vegUnit=1)
 
+
+
+
 # Add test data for Payments and Payment types
 payment1 = Payment(paymentAmount=100.0, paymentDate=date(2023, 5, 21), paymentID=1, customer_id=customer1.id)
 credit_card_payment1 = CreditCardPayment(paymentAmount=100.0, paymentDate=date(2023, 5, 21), paymentID=2, customer_id=customer1.id, cardExpiryDate=date(2025, 12, 31), cardNumber="1234567890123456", cardType="Visa")
@@ -270,9 +279,31 @@ credit_card_payment1 = CreditCardPayment(paymentAmount=100.0, paymentDate=date(2
 debit_card_payment1 = DebitCardPayment(paymentAmount=150.0, paymentDate=date(2023, 6, 15), paymentID=3,customer_id=corporate_customer1.id, bankName="Bank XYZ", debitCardNumber="9876543210987654")
 
 # Add all the objects to the session
-session.add_all([staff1, customer1, corporate_customer1,
-    order1, orderline1, premade_box1, weighted_veggie1, weighted_veggie2, pack_veggie1, unit_price_veggie1, unit_price_veggie2, unit_price_veggie3, payment1, credit_card_payment1, debit_card_payment1
+session.add_all([staff1, customer1, corporate_customer1, premade_box1, weighted_veggie1, weighted_veggie2, pack_veggie1, unit_price_veggie1, unit_price_veggie2, unit_price_veggie3, payment1, credit_card_payment1, debit_card_payment1
 ])
+
+session.commit()
+
+# Create OrderLines (with quantity and items)
+orderline1 = OrderLine(quantity=5, item_id=premade_box1.id)
+orderline2 = OrderLine(quantity=2, item_id=weighted_veggie1.id)
+orderline3 = OrderLine(quantity=10, item_id=unit_price_veggie1.id)
+
+# Create Orders
+order1 = Order(customer_id=customer1.id, orderDate=date(2023, 5, 21),  orderStatus="Processing")
+order2 = Order(customer_id=corporate_customer1.id, orderDate=date(2024, 10, 21),  orderStatus="Shipped")
+
+
+# Add order lines to orders
+order1.listOfItems.append(orderline1)
+order1.listOfItems.append(orderline2)
+order2.listOfItems.append(orderline3)
+
+# Add orders to customer
+customer1.orders.append(order1)
+corporate_customer1.orders.append(order2)
+
+session.add_all([order1, order2, orderline1, orderline2, orderline3 ])
 
 # Commit the session to save the objects to the database
 session.commit()
