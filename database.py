@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey, Date
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from datetime import date
+from sqlalchemy.ext.hybrid import hybrid_property
+
 
 
 # Create an engine to connect to MySQL database
@@ -99,12 +101,6 @@ class Order(Base):
 
 
 
-
-    
-
-
-      
-
 class Item(Base):
     __tablename__ = 'item'
     id = Column(Integer, primary_key=True)
@@ -126,16 +122,20 @@ class Veggie(Item):
     vegName = Column(String(50), nullable=False)
     vegType = Column(String(50))
     unit = Column(String(50))
+    price = Column(Float)
 
     __mapper_args__ = {
-        'polymorphic_on': 'vegType', 
+        'polymorphic_on': vegType, 
         'polymorphic_identity': 'veggie',
     }
 
-    def __init__(self, img_src, vegName, unit):
+    
+
+    def __init__(self, img_src, vegName, unit, price):
         super().__init__(img_src=img_src)
         self.vegName = vegName
         self.unit = unit
+        self.price = price
         self.type = 'veggie'
 
 class PremadeBox(Item):
@@ -144,16 +144,18 @@ class PremadeBox(Item):
     boxSize = Column(String(255))
     numOfBoxes = Column(Integer)
     boxContent = Column(String(255))
+    price = Column(Float)
 
     __mapper_args__ = {
         'polymorphic_identity': 'premadebox',
     }
 
-    def __init__(self, img_src, boxSize, numOfBoxes, boxContent):
+    def __init__(self, img_src,boxSize, numOfBoxes, boxContent,price):
         super().__init__(img_src=img_src)
         self.boxSize = boxSize
         self.numOfBoxes = numOfBoxes
         self.boxContent = boxContent
+        self.price = price
 
         
 
@@ -200,48 +202,50 @@ class WeightedVeggie(Veggie):
     __tablename__ = 'weightedveggie'
     id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
     weightUnit = Column(Float)
-    pricePerWeight = Column(Float)
-
+    
     __mapper_args__ = {
         'polymorphic_identity': 'weightedveggie', 
     }
 
-    def __init__(self, img_src, vegName, unit, weightUnit, pricePerWeight):
-        super().__init__(img_src=img_src, vegName=vegName, unit=unit)
+
+    def __init__(self, img_src, price, vegName, unit, weightUnit):
+        super().__init__(img_src=img_src, vegName=vegName, unit=unit, price=price)
         self.vegType = 'weightedveggie'
         self.weightUnit = weightUnit
-        self.pricePerWeight = pricePerWeight
+       
 
 class PackVeggie(Veggie):
     __tablename__ = 'packveggie'
     id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
     pack=Column(Integer)
-    pricePerPack = Column(Float)
+   
     __mapper_args__ = {
         'polymorphic_identity': 'packveggie',
     }
 
-    def __init__(self, img_src, vegName, unit, pack, pricePerPack):
-        super().__init__(img_src=img_src, vegName=vegName, unit=unit)
+
+    def __init__(self, img_src, vegName, unit, price, pack):
+        super().__init__(img_src=img_src, vegName=vegName, unit=unit, price=price)
         self.vegType = 'packveggie'
         self.pack = pack
-        self.pricePerPack = pricePerPack
+     
 
 class UnitPriceVeggie(Veggie):
     __tablename__ = 'unitpriceveggie'
     id = Column(Integer, ForeignKey('veggie.id'), primary_key=True)  
     vegUnit=Column(Integer)
-    pricePerUnit = Column(Float)
+
 
     __mapper_args__ = {
         'polymorphic_identity': 'unitpriceveggie',
     }
 
-    def __init__(self, img_src, vegName, unit, vegUnit, pricePerUnit):
-        super().__init__(img_src=img_src, vegName=vegName, unit=unit)
+
+    def __init__(self, img_src, vegName, unit, price,vegUnit):
+        super().__init__(img_src=img_src, vegName=vegName, unit=unit, price=price)
         self.vegType = 'unitpriceveggie'
         self.vegUnit= vegUnit
-        self.pricePerUnit = pricePerUnit
+      
 
 
 # Create all tables
@@ -260,14 +264,14 @@ customer1 = Customer(firstName="Bob", lastName="Brown", password="1234", usernam
 corporate_customer1 = CorporateCustomer(firstName="Shane", lastName="Xu", password="1234", username="foliageandvine", custAddress="456 Corporate Blvd", custBalance=500.0, custID=2, maxOwing=200.0, discountRate=10.0, maxCredit=1000.0, minBalance=50.0)
 
 
-premade_box1 = PremadeBox(img_src="images/PremadeBox.jpg", boxSize="Large", numOfBoxes=10, boxContent="Carrots, Potatoes")
+premade_box1 = PremadeBox(img_src="images/PremadeBox.jpg", boxSize="Small", numOfBoxes=10, boxContent="Carrots, Potatoes", price = 19.99)
 
-weighted_veggie1 = WeightedVeggie(img_src="images/Galic.jpg",vegName="Galic", unit='g', weightUnit=500, pricePerWeight=9.99)
-weighted_veggie2 = WeightedVeggie(img_src="images/Tomatos.jpg",vegName="Tomatos", unit='kg',weightUnit=1,  pricePerWeight=5.99)
-pack_veggie1 = PackVeggie(img_src="images/Eggplant.jpg",vegName="Eggplant", unit='bag', pack=1, pricePerPack=4.99)
-unit_price_veggie1 = UnitPriceVeggie(img_src="images/Squash.jpg",vegName="Squash", unit='ea', pricePerUnit=0.5, vegUnit=1)
-unit_price_veggie2 = UnitPriceVeggie(img_src="images/Broccoli.jpg",vegName="Broccoli", unit='ea', pricePerUnit=2.99, vegUnit=1)
-unit_price_veggie3 = UnitPriceVeggie(img_src="images/Avocado.jpg",vegName="Avocado", unit='ea', pricePerUnit=1.19, vegUnit=1)
+weighted_veggie1 = WeightedVeggie(img_src="images/Galic.jpg",vegName="Galic", unit='g', weightUnit=500, price=9.99)
+weighted_veggie2 = WeightedVeggie(img_src="images/Tomatos.jpg",vegName="Tomatos", unit='kg',weightUnit=1, price=5.99)
+pack_veggie1 = PackVeggie(img_src="images/Eggplant.jpg",vegName="Eggplant", unit='bag', pack=1, price=4.99)
+unit_price_veggie1 = UnitPriceVeggie(img_src="images/Squash.jpg",vegName="Squash", unit='ea', price=0.5, vegUnit=1)
+unit_price_veggie2 = UnitPriceVeggie(img_src="images/Broccoli.jpg",vegName="Broccoli", unit='ea', price=2.99, vegUnit=1)
+unit_price_veggie3 = UnitPriceVeggie(img_src="images/Avocado.jpg",vegName="Avocado", unit='ea', price=1.19, vegUnit=1)
 
 
 
@@ -286,7 +290,7 @@ session.commit()
 
 # Create OrderLines (with quantity and items)
 orderline1 = OrderLine(quantity=5, item_id=premade_box1.id)
-orderline2 = OrderLine(quantity=2, item_id=weighted_veggie1.id)
+orderline2 = OrderLine(quantity=2, item_id=pack_veggie1.id)
 orderline3 = OrderLine(quantity=10, item_id=unit_price_veggie1.id)
 
 # Create Orders

@@ -45,19 +45,20 @@
             <th scope="col">Order number</th>
             <th scope="col">Order Date</th>
             <th scope="col">Order Staus</th>
-            <th scope="col">Total</th>
           </tr>
         </thead>
         <tbody class="table-group-divider">
           {% if order_history %} {% for order in order_history %}
           <tr>
             <th scope="row">
-              <a href="#">#{{ order.id }} </a>
+              <a href="{{ url_for('order_details', id=order.id) }}"
+                >#{{ order.id }}
+              </a>
             </th>
             <td>{{ order.orderDate }}</td>
             <td>{{ order.orderStatus }}</td>
             <td>
-              {{ order.total }} {% if order.orderStatus == 'Processing'%}
+              {% if order.orderStatus == 'Processing'%}
               <!-- Button trigger modal -->
               <button
                 type="button"

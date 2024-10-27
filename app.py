@@ -37,12 +37,12 @@ def index():
     name = session.get('firstName')
     veggie = Veggie.query.all()
     if isinstance(veggie, WeightedVeggie):
-        price = veggie.pricePerWeight  # price per kilo
+        price = veggie.price  # price per kilo
     elif isinstance(veggie, PackVeggie):
-        price = veggie.pricePerPack  # price per pack
+        price = veggie.price   # price per pack
       
     elif isinstance(veggie, UnitPriceVeggie):
-        price = veggie.pricePerUnit  # price per pack  
+        price = veggie.price  # price per pack  
     else:
         price = None
        
@@ -110,22 +110,23 @@ def item(id):
     name = session.get('firstName')
     # Fetch the veggie by id
     veggie = Veggie.query.get_or_404(id)
+    print(veggie)
 
     if veggie is None:
         return "Veggie not found", 404
 
     # Check the type of veggie and get the relevant price
     if isinstance(veggie, WeightedVeggie):
-        price = veggie.pricePerWeight  # price per kilo
+        price = veggie.price  # price per kilo
         unit = veggie.unit
         perUnit = veggie.weightUnit
     elif isinstance(veggie, PackVeggie):
-        price = veggie.pricePerPack  # price per pack
+        price = veggie.price  # price per pack
         unit = veggie.unit
         perUnit = veggie.pack
 
     elif isinstance(veggie, UnitPriceVeggie):
-        price = veggie.pricePerUnit  # price per pack
+        price = veggie.price  # price per pack
         unit = veggie.unit
         perUnit = veggie.vegUnit
 
@@ -145,11 +146,27 @@ def cart():
 
 
 @app.route('/order/<int:id>/', methods=['GET', 'POST'])
-def oder_detail(id):
+def order_details(id):
 
     name = session.get('firstName')
-    return render_template('cart.html', name=name)
-    
+
+    if 'loggedin' in session:
+      order_details = Order.get_order_details(id)
+
+
+
+      user_type = session.get('type') 
+      if user_type == 'staff':
+          return render_template('staff-order_details.html', name=name)
+      if user_type == 'customer':
+          return render_template('customer-order_details.html', name=name, order_details=order_details)
+      if user_type == 'corporatecustomer':
+          return render_template('corporate-order_details.html', name=name, order_details=order_details)
+      
+    return redirect(url_for('index')) 
+
+
+   
 
 @app.route("/dashboard")
 def dashboard():
@@ -174,8 +191,6 @@ def dashboard():
           return render_template('corporate-dashboard.html', name=name, order_history = order_history)
       
     return redirect(url_for('index'))      
-
-
 
 
 

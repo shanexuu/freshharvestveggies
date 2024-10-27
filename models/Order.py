@@ -2,13 +2,16 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import Column, Integer, String,ForeignKey, Date, Float
 from datetime import date
 from .Veggie import Veggie
+from .Item import Item
 from .PremadeBox import PremadeBox
 from .WeightedVeggie import WeightedVeggie
 from .PackVeggie import PackVeggie
 from .UnitPriceVeggie import UnitPriceVeggie
-
-
+from .OrderLine import OrderLine
 from . import db
+from flask import Flask, render_template, request, url_for, redirect, session
+
+from sqlalchemy.orm import sessionmaker
 class Order(db.Model):
     __tablename__ = 'order'
     id = Column(Integer, primary_key=True)
@@ -36,65 +39,38 @@ class Order(db.Model):
       order_details_list = []
     
       for order in customer.orders:
-        order_total = 0  # Initialize the total price for the current order
-
+    
         order_details = {
             "id": order.id,
             "orderDate": order.orderDate,
             "orderStatus": order.orderStatus,
             "listOfItems": [],
-            "total": 0  # This will store the final total for the order
+
         }
 
         for order_line in order.listOfItems:
             item = order_line.item  # Retrieve the item from the order line
             quantity = order_line.quantity
-            
             item_details = {
                 "item_id": item.id,
+                "img": "",
                 "quantity": quantity,
-                "subtotal": 0  # Initialize subtotal for each item
-            }
+                "name": "",    
+            }  
+            # Set the item name
+            item_details["name"] = item.vegName if isinstance(item, Veggie) else item.boxContent
             
-            # Determine the price based on the item type and calculate subtotal
-            if isinstance(item, Veggie):
-                item_details["name"] = item.vegName
-                if isinstance(item, WeightedVeggie):
-                    item_details["price"] = item.pricePerWeight
-                    item_details["subtotal"] = quantity * item_details["price"]
-                elif isinstance(item, PackVeggie):
-                    item_details["price"] = item.pricePerPack
-                    item_details["subtotal"] = quantity * item_details["price"]
-                elif isinstance(item, UnitPriceVeggie):
-                    item_details["price"] = item.pricePerUnit
-                    item_details["subtotal"] = quantity * item_details["price"]
-
-            elif isinstance(item, PremadeBox):
-                item_details["name"] = item.boxContent
-                item_details["price"] = 0  # Assuming PremadeBox has a price field
-                item_details["subtotal"] = quantity * item_details["price"]
-
-            else:
-                item_details["name"] = "Unknown Item Type"
-                item_details["price"] = 0
-
-            # Add the item subtotal to the order total
-            order_total += item_details["subtotal"]
-            order_details["listOfItems"].append(item_details)
         
-        # Set the calculated total for the current order
-        order_details["total"] = order_total
         order_details_list.append(order_details)
     
       return order_details_list
 
 
-
-    def get_order_details(cls, order_id):
+    def get_order_details(order_id):
         """
         Retrieve the details of a specific order by its ID.
         """
-        order = db.session.query(cls).get(order_id)
+        order = db.session.query(Order).get(order_id)
 
         if not order:
             return None
@@ -103,21 +79,38 @@ class Order(db.Model):
             "id": order.id,
             "orderDate": order.orderDate,
             "orderStatus": order.orderStatus,
-            "listOfItems": []
+            "listOfItems": [],
+            "total_price": 0
         }
 
         for order_line in order.listOfItems:
-            item_name = None
-            # Check if item is a Veggie or PremadeBox type and get the name accordingly
-            if isinstance(order_line.item, Veggie):
-                item_name = order_line.item.vegName
-            elif isinstance(order_line.item, PremadeBox):
-                item_name = order_line.item.boxContent
+           
+            item = order_line.item  # Retrieve the item from the order line
+            quantity = order_line.quantity
+            item_price = item.get_price
+            item_details = {
+                "item_id": item.id,
+                "quantity": quantity,
+                "name": "", 
+                "img": item.img_src,
+                "price": item_price,  
+                "total_item_price": item_price * quantity
+              
+            }  
+            
+            if isinstance(item, Veggie):
+                item_details["name"] = item.vegName
+            elif isinstance(item, PremadeBox):
+                item_details["name"] = item.boxContent
 
-            order_details["listOfItems"].append({
-                "name": item_name,
-                "quantity": order_line.quantity
-            })
+          
+            
+            # Append item details to the list
+            order_details["listOfItems"].append(item_details)
+        
+             # Add to total price of the order
+            order_details["total_price"] += item_details["total_item_price"]
+
 
         return order_details   
     

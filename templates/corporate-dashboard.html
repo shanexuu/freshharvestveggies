@@ -39,7 +39,108 @@
     </div>
     <div class="col-md-7 col-lg-9">
       <h5 class="fw-semibold">Order History</h5>
-      <pre>{{ order_history }}</pre>
+      <table class="table mt-3">
+        <thead>
+          <tr>
+            <th scope="col">Order number</th>
+            <th scope="col">Order Date</th>
+            <th scope="col">Order Staus</th>
+            <th scope="col">Total</th>
+          </tr>
+        </thead>
+        <tbody class="table-group-divider">
+          {% if order_history %} {% for order in order_history %}
+          <tr>
+            <th scope="row">
+              <a href="#">#{{ order.id }} </a>
+            </th>
+            <td>{{ order.orderDate }}</td>
+            <td>{{ order.orderStatus }}</td>
+            <td>
+              {% for item in order.listOfItems %} price:{{ item.price }} unit:
+              {{ item.unit }} quantity:{{ item.quantity }} name: {{ item.name
+              }}{% endfor %}{% if order.orderStatus == 'Processing'%}
+              <!-- Button trigger modal -->
+              <button
+                type="button"
+                class="rounded-2"
+                data-bs-toggle="modal"
+                data-bs-target="#exampleModal"
+                style="
+                  padding-right: 1rem;
+                  padding-left: 1rem;
+                  padding-top: 0;
+                  padding-bottom: 0;
+                "
+              >
+                Cancel order
+              </button>
+
+              <!-- Modal -->
+              <div
+                class="modal fade"
+                id="exampleModal"
+                tabindex="-1"
+                aria-labelledby="exampleModalLabel"
+                aria-hidden="true"
+              >
+                <div class="modal-dialog">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h4
+                        class="fw-semibold"
+                        id="exampleModalLabel"
+                      >
+                        Cancel order
+                      </h4>
+                      <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Close"
+                      ></button>
+                    </div>
+                    <div class="modal-body">
+                      Are you sure you want to cancel order?
+                    </div>
+                    <div class="modal-footer">
+                      <button
+                        type="button"
+                        class="rounded-2 button-yellow"
+                        data-bs-dismiss="modal"
+                        style="
+                          padding-right: 1rem;
+                          padding-left: 1rem;
+                          padding-top: 0;
+                          padding-bottom: 0;
+                        "
+                      >
+                        No
+                      </button>
+                      <button
+                        type="button"
+                        class="rounded-2"
+                        style="
+                          padding-right: 1rem;
+                          padding-left: 1rem;
+                          padding-top: 0;
+                          padding-bottom: 0;
+                        "
+                      >
+                        Yes
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% else %} {% endif %}
+            </td>
+          </tr>
+          {% endfor %} {% else %}
+          <p>No orders found for this customer.</p>
+          {% endif %}
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
