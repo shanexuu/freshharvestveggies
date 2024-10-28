@@ -36,10 +36,8 @@ class Customer(Person):
     id = Column(Integer, ForeignKey('person.id'), primary_key=True)
     custAddress = Column(String(255))
     custBalance = Column(Float)
-    custID = Column(Integer)
     maxOwing = Column(Float)
     cusType = Column(String(50))
-
     orders = relationship("Order", back_populates="customer")
 
 
@@ -48,11 +46,11 @@ class Customer(Person):
         'polymorphic_identity': 'customer',
     }
 
-    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, custID, maxOwing):
+    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, maxOwing):
         super().__init__(firstName=firstName, lastName=lastName, password=password, username=username)
         self.custAddress = custAddress
         self.custBalance = custBalance
-        self.custID = custID
+    
         self.maxOwing = maxOwing
         self.type = 'customer'
        
@@ -178,8 +176,8 @@ class CorporateCustomer(Customer):
         'polymorphic_identity': 'corporatecustomer', 
     }
 
-    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, custID, maxOwing, discountRate, maxCredit, minBalance):
-        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username,custAddress=custAddress, custBalance=custBalance, custID=custID, maxOwing=maxOwing)
+    def __init__(self, firstName, lastName, password, username,custAddress, custBalance,maxOwing, discountRate, maxCredit, minBalance):
+        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username,custAddress=custAddress, custBalance=custBalance,maxOwing=maxOwing)
         self.cusType = 'corporatecustomer'
         self.discountRate = discountRate
         self.maxCredit = maxCredit
@@ -259,9 +257,9 @@ session = Session()
 
 staff1 = Staff(firstName="Alice", lastName="Johnson", password="1234", username="alicej", dateJoined=date(2022, 1, 15), deptName="Sales",staffID=1)
 
-customer1 = Customer(firstName="Bob", lastName="Brown", password="1234", username="bobb", custAddress="123 Main St", custBalance=100.0, custID=1, maxOwing=50.0)
+customer1 = Customer(firstName="Bob", lastName="Brown", password="1234", username="bobb", custAddress="123 Main St", custBalance=100.0, maxOwing=50.0)
 
-corporate_customer1 = CorporateCustomer(firstName="Shane", lastName="Xu", password="1234", username="foliageandvine", custAddress="456 Corporate Blvd", custBalance=500.0, custID=2, maxOwing=200.0, discountRate=10.0, maxCredit=1000.0, minBalance=50.0)
+corporate_customer1 = CorporateCustomer(firstName="Shane", lastName="Xu", password="1234", username="foliageandvine", custAddress="456 Corporate Blvd", custBalance=500.0,maxOwing=200.0, discountRate=10.0, maxCredit=1000.0, minBalance=50.0)
 
 
 premade_box1 = PremadeBox(img_src="images/PremadeBox.jpg", boxSize="Small", numOfBoxes=10, boxContent="Carrots, Potatoes", price = 19.99)
@@ -269,7 +267,7 @@ premade_box1 = PremadeBox(img_src="images/PremadeBox.jpg", boxSize="Small", numO
 weighted_veggie1 = WeightedVeggie(img_src="images/Galic.jpg",vegName="Galic", unit='g', weightUnit=500, price=9.99)
 weighted_veggie2 = WeightedVeggie(img_src="images/Tomatos.jpg",vegName="Tomatos", unit='kg',weightUnit=1, price=5.99)
 pack_veggie1 = PackVeggie(img_src="images/Eggplant.jpg",vegName="Eggplant", unit='bag', pack=1, price=4.99)
-unit_price_veggie1 = UnitPriceVeggie(img_src="images/Squash.jpg",vegName="Squash", unit='ea', price=0.5, vegUnit=1)
+unit_price_veggie1 = UnitPriceVeggie(img_src="images/Squash.jpg",vegName="Squash", unit='ea', price=4.99, vegUnit=1)
 unit_price_veggie2 = UnitPriceVeggie(img_src="images/Broccoli.jpg",vegName="Broccoli", unit='ea', price=2.99, vegUnit=1)
 unit_price_veggie3 = UnitPriceVeggie(img_src="images/Avocado.jpg",vegName="Avocado", unit='ea', price=1.19, vegUnit=1)
 
@@ -295,7 +293,7 @@ orderline3 = OrderLine(quantity=10, item_id=unit_price_veggie1.id)
 
 # Create Orders
 order1 = Order(customer_id=customer1.id, orderDate=date(2023, 5, 21),  orderStatus="Processing")
-order2 = Order(customer_id=corporate_customer1.id, orderDate=date(2024, 10, 21),  orderStatus="Shipped")
+order2 = Order(customer_id=corporate_customer1.id, orderDate=date(2024, 10, 21),  orderStatus="Fulfilled")
 
 
 # Add order lines to orders

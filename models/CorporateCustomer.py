@@ -15,8 +15,8 @@ class CorporateCustomer(Customer):
         'polymorphic_identity': 'corporatecustomer', 
     }
 
-    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, custID, maxOwing, discountRate, maxCredit, minBalance):
-        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username,custAddress=custAddress, custBalance=custBalance, custID=custID, maxOwing=maxOwing)
+    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, maxOwing, discountRate, maxCredit, minBalance):
+        super().__init__(firstName=firstName, lastName=lastName, password=password, username=username,custAddress=custAddress, custBalance=custBalance, maxOwing=maxOwing)
         self.cusType = 'corporatecustomer'
         self.discountRate = discountRate
         self.maxCredit = maxCredit

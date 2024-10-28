@@ -1,7 +1,12 @@
 from sqlalchemy import Column, String, ForeignKey, Integer, Date, Float
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
-from .Person import db, Person
+from .Person import Person
+from .Order import Order
 from datetime import date
+from sqlalchemy.orm.exc import NoResultFound
+from . import db
+from flask import Flask, render_template, request, url_for, redirect, session
+
 
 
 class Customer(Person):
@@ -10,7 +15,6 @@ class Customer(Person):
     id = Column(Integer, ForeignKey('person.id'), primary_key=True)
     custAddress = Column(String(255))
     custBalance = Column(Float)
-    custID = Column(Integer)
     maxOwing = Column(Float)
     cusType = Column(String(50))
 
@@ -21,11 +25,10 @@ class Customer(Person):
         'polymorphic_identity': 'customer',
     }
 
-    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, custID, maxOwing):
+    def __init__(self, firstName, lastName, password, username,custAddress, custBalance, maxOwing):
         super().__init__(firstName=firstName, lastName=lastName, password=password, username=username)
         self.custAddress = custAddress
         self.custBalance = custBalance
-        self.custID = custID
         self.maxOwing = maxOwing
         self.type = 'customer'
 
@@ -39,28 +42,53 @@ class Customer(Person):
             'address': self.custAddress,
             'balance': self.custBalance,
             'maxOwing': self.maxOwing,
+         
           
         }
         return profile_data
     
-    # Method to display customer orders
-    def display_orders(self):
+    def cancel_order(self, order_id):
         """
-        Returns the order details for the customer to be rendered.
+        Cancel an order for this customer by order_id.
+        
+        Args:
+            order_id (int): The ID of the order to cancel.
+            session (Session): SQLAlchemy session for database operations.
+        
+        Returns:
+            str: Confirmation message for the canceled order or error message.
         """
-        if not self.orders:
-            return "No orders found for this customer."
+        try:
+            # Find the order by ID and ensure it belongs to this customer
+            order = db.session.query(Order).filter_by(id=order_id, customer_id=self.id).one()
 
-        order_details_list = []
-        for order in self.orders:
-            order_details = f"Order ID: {order.id}\n"
-            order_details += f"Order Date: {order.orderDate}\n"
-            order_details += f"Order Status: {order.orderStatus}\n"
-            order_details += "Items:\n"
-            
-            for order_line in order.listOfItems:
-                order_details += f"  - Item ID: {order_line.item_id}, Quantity: {order_line.quantity}\n"
-            
-            order_details_list.append(order_details)
+            # Check if the order is eligible to be canceled
+            if order.orderStatus == "Processing":
+                # Cancel the order
+               order.orderStatus = "Canceled"
+               db.session.add(order)
 
-        return "\n".join(order_details_list)
+            #    if order.total_amount and self.custBalance is not None:
+            #     self.custBalance += order.total_amount
+            #     session.add(self)  # Update customer's balance in the database
+
+               db.session.commit()
+               return f"Order {order_id} has been successfully canceled."
+            
+            if order.orderStatus == "Fulfilled":
+                return "Order has already been completed and cannot be canceled."
+            elif order.orderStatus == "Canceled":
+                return "Order has already been canceled."
+    
+            else:
+                return None
+
+        except NoResultFound:
+            return f"Order {order_id} not found for this customer."
+        except Exception as e:
+            db.session.rollback()  
+            return f"An error occurred while canceling the order: {e}"
+    
+
+       
+        

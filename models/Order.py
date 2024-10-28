@@ -12,13 +12,13 @@ from . import db
 from flask import Flask, render_template, request, url_for, redirect, session
 
 from sqlalchemy.orm import sessionmaker
+
 class Order(db.Model):
     __tablename__ = 'order'
     id = Column(Integer, primary_key=True)
     customer_id = Column(Integer, ForeignKey('customer.id'))
     orderDate = Column(Date)
     orderStatus = Column(String(50))
-
     customer = relationship("Customer", back_populates="orders")
     listOfItems = relationship("OrderLine", back_populates="order")
 
