@@ -26,6 +26,28 @@ class Person(db.Model):
 
     def check_password(self, input_password):
         return self.password == input_password
+    
+
+    def add_to_cart(self, item, quantity=1):
+        """
+        Adds an item to the cart or updates the quantity if it already exists.
+        Arguments:
+            item (Item): The item object to be added to the cart.
+            quantity (int): The quantity of the item to add. Defaults to 1.
+        """
+        item_id = item.id
+        if item_id in self.cart:
+            # Update quantity if item already in cart
+            self.cart[item_id]["quantity"] += quantity
+        else:
+            # Add new item to cart
+            self.cart[item_id] = {
+                "name": item.name,
+                "img": item.img_src,
+                "price": item.get_price,
+                "quantity": quantity
+            }
+        print(f"Added {quantity} of {item.name} to cart.")
 
 
     

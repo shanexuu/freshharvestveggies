@@ -1,0 +1,22 @@
+{% extends 'base-full.html' %} {% block content %}
+<div class="container mt-5">
+  <h5>Product Details</h5>
+  <form method="POST">
+    <div class="d-flex gap-5 mt-5">
+      <img
+        src="{{ url_for('static', filename=premadebox.img_src) }}"
+        alt="premabox"
+      />
+      <div>
+        <h1 class="fw-semibold">Premadebox</h1>
+        <p>size: {{ premadebox.boxSize }}</p>
+        <div class="d-flex"></div>
+        <h1 class="fw-semibold">${{ premadebox.price }}</h1>
+        <a href="{{ url_for('cart') }}"><button>Add to cart</button></a>
+        <h6 class="mt-5">Box content:</h6>
+        <p>{{ premadebox.boxContent }}</p>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

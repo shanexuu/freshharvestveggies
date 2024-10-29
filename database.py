@@ -275,8 +275,8 @@ unit_price_veggie3 = UnitPriceVeggie(img_src="images/Avocado.jpg",vegName="Avoca
 
 
 # Add test data for Payments and Payment types
-payment1 = Payment(paymentAmount=100.0, paymentDate=date(2023, 5, 21), paymentID=1, customer_id=customer1.id)
-credit_card_payment1 = CreditCardPayment(paymentAmount=100.0, paymentDate=date(2023, 5, 21), paymentID=2, customer_id=customer1.id, cardExpiryDate=date(2025, 12, 31), cardNumber="1234567890123456", cardType="Visa")
+payment1 = Payment(paymentAmount=100.0, paymentDate=date(2024, 10, 21), paymentID=1, customer_id=customer1.id)
+credit_card_payment1 = CreditCardPayment(paymentAmount=100.0, paymentDate=date(2024, 10, 28), paymentID=2, customer_id=customer1.id, cardExpiryDate=date(2025, 12, 31), cardNumber="1234567890123456", cardType="Visa")
 
 debit_card_payment1 = DebitCardPayment(paymentAmount=150.0, paymentDate=date(2023, 6, 15), paymentID=3,customer_id=corporate_customer1.id, bankName="Bank XYZ", debitCardNumber="9876543210987654")
 
@@ -292,8 +292,8 @@ orderline2 = OrderLine(quantity=2, item_id=pack_veggie1.id)
 orderline3 = OrderLine(quantity=10, item_id=unit_price_veggie1.id)
 
 # Create Orders
-order1 = Order(customer_id=customer1.id, orderDate=date(2023, 5, 21),  orderStatus="Processing")
-order2 = Order(customer_id=corporate_customer1.id, orderDate=date(2024, 10, 21),  orderStatus="Fulfilled")
+order1 = Order(customer_id=customer1.id, orderDate=date(2024, 10, 21),  orderStatus="Processing")
+order2 = Order(customer_id=corporate_customer1.id, orderDate=date(2024, 10, 28),  orderStatus="Fulfilled")
 
 
 # Add order lines to orders

@@ -6,6 +6,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Float, ForeignKey
 from models import db 
 from models.Item import Item 
 from models.Veggie import Veggie 
+from models.PremadeBox import PremadeBox
 from models.PackVeggie import PackVeggie 
 from models.WeightedVeggie import WeightedVeggie
 from models.UnitPriceVeggie import UnitPriceVeggie
@@ -59,9 +60,10 @@ def shop():
 @app.route("/premadebox")
 def premadeBox():
     name = session.get('firstName')
-   
-    return render_template('premadebox.html', name=name)
 
+    premadeboxes = PremadeBox.query.all()
+   
+    return render_template('premadebox.html', name=name, premadeboxes=premadeboxes)
 
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -138,12 +140,59 @@ def item(id):
 
     return render_template('item-details.html', veggie=veggie, price=price, unit=unit, perUnit=perUnit, name=name)
 
+@app.route('/premadebox/<int:id>/', methods=['GET', 'POST'])
+def premabox_details(id):
+
+    name = session.get('firstName')
+    # Fetch the veggie by id
+    premadebox = PremadeBox.query.get_or_404(id)
+
+    return render_template('premadebox-details.html', premadebox=premadebox)
+
+
 @app.route("/cart")
 def cart():
     name = session.get('firstName')
-    return render_template('cart.html', name=name)
+
+    cart = session.get('cart', {})
+    
+    # Calculate subtotal
+    subtotal = sum(item['price'] * item['quantity'] for item in cart.values())
+
+    return render_template('cart.html', name=name, cart=cart, subtotal=subtotal)
 
 
+
+@app.route('/add-to-cart', methods=['POST'])
+def add_to_cart():
+    item_id = request.form.get('item_id')
+    item_name = request.form.get('item_name')
+    item_price = float(request.form.get('item_price'))
+    item_quantity = int(request.form.get('quantity', 1))
+
+    # Initialize the cart in session if it doesn't exist
+    if 'cart' not in session:
+        session['cart'] = {}
+
+    # Access the cart from the session
+    cart = session['cart']
+
+    # If the item is already in the cart, update its quantity
+    if item_id in cart:
+        cart[item_id]['quantity'] += item_quantity
+    else:
+        # Otherwise, add the item with its details
+        cart[item_id] = {
+            'name': item_name,
+            'price': item_price,
+            'quantity': item_quantity,
+            'img': request.form.get('img_src', '')  
+        }
+
+    # Save the updated cart back to session
+    session['cart'] = cart
+
+    return redirect(url_for('cart'))
 
 @app.route('/order/<int:id>/', methods=['GET', 'POST'])
 def order_details(id):
@@ -310,9 +359,7 @@ def staff_premadebox():
     else:
         return redirect(url_for('login'))
       
-       
-
-
+    
 @app.route("/staff/customers")
 def staff_customers():
 
@@ -347,8 +394,6 @@ def staff_view_customer(customer_id):
 
         customer= staff.display_customer_details(customer_id)
         
-        
-        
         return render_template('staff-customer_details.html', customer=customer, name=name)
     
     else:
@@ -359,19 +404,24 @@ def staff_view_customer(customer_id):
 @app.route("/staff/reports")
 def staff_reports():
 
-    if 'loggedin' in session:
+    user_type = session.get('type')
+    name = session.get('firstName')
+    # Ensure the user is logged in and is a staff member
+    if 'loggedin' in session and user_type == 'staff':
 
-      user_type = session.get('type')
-      name = session.get('firstName')
-      if user_type == 'staff':
+        # Get the staff member from session user ID
+        staff_id = session.get('id')
+        staff = Staff.query.get(staff_id)
+
+        reports= staff.sales_report()
+        popularity_items = staff.get_popularity_items()
           
-        return render_template('staff-reports.html',name=name)
+        return render_template('staff-reports.html',name=name, reports=reports,popularity_items=popularity_items)
         
-      else:
-        return redirect(url_for('login'))
-      
     else:
         return redirect(url_for('login'))
+      
+
     
 
 
@@ -381,7 +431,7 @@ def logout():
     session.pop('loggedin', None)
     session.pop('type', None)
     session.pop('id', None)
-    
+    session.pop('cart', None)
     return redirect(url_for('index'))
 
 

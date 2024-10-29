@@ -63,8 +63,8 @@
             </td>
 
             <td>{{ item.quantity }}</td>
-            <td>{{ item.price | round(2) }}</td>
-            <td>{{ item.total_item_price | round(2) }}</td>
+            <td>${{ item.price | round(2) }}</td>
+            <td>${{ item.total_item_price | round(2) }}</td>
           </tr>
           {% endfor %}
         </tbody>

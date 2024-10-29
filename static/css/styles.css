@@ -125,3 +125,14 @@ tr {
 .modal-footer {
   border-top: none !important;
 }
+
+.card {
+  border: #2d2f0c 1px solid !important;
+  background-color: #ffffeb !important;
+  color: #2d2f0c;
+}
+input {
+  padding: 0.5rem;
+  border: #2d2f0c 1px solid;
+  border-radius: 5px;
+}

@@ -30,20 +30,4 @@ class PremadeBox(Item):
         return self.price
 
 
-    # @property
-    # def size(self) -> str:
-    #     """Return the size of the premade box."""
-    #     return self.__size
-
-    # @property
-    # def contents(self) -> List[str]:
-    #     """Return the contents of the premade box."""
-    #     return self.__contents
-
-    # def get_price(self) -> float:
-    #     """Return the price of the premade box."""
-    #     return self.price
-
-    # def get_details(self) -> str:
-    #     """Return details about the premade box."""
-    #     return f"Premade Box: {self.__size}, Contents: {', '.join(self.__contents)}, Price: {self.price}"
+    

@@ -1,6 +1,33 @@
 {% extends 'base-full.html' %} {% block content %}
 <div class="container mt-5">
   <h1>Premade Box</h1>
+
+  <div class="row mt-5">
+    {% for box in premadeboxes %}
+    <div class="col-12 col-sm-3 mb-4">
+      <div class="d-flex flex-column justify-content-between text-center">
+        <a href="{{ url_for('premabox_details', id=box.id) }}">
+          <img
+            src="{{ url_for('static', filename=box.img_src) }}"
+            alt="premadebox"
+            class="img-fluid"
+          />
+        </a>
+
+        <a
+          href="{{ url_for('premabox_details', id=box.id) }}"
+          class="mt-3 text-decoration-none fw-semibold"
+          style="color: #2d2f0c"
+          >Premadebox</a
+        >
+
+        <p>{{ box.boxSize }}</p>
+      </div>
+    </div>
+
+    {% if loop.index % 4 == 0 and not loop.last %}
+  </div>
+  <div class="row">{% endif %} {% endfor %}</div>
 </div>
 
 {% endblock %}

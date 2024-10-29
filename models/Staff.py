@@ -1,6 +1,5 @@
 from sqlalchemy import Column, String, ForeignKey, Integer, Date
 from .Person import Person
-from datetime import date
 from sqlalchemy.orm import relationship
 from .Order import Order  
 from .OrderLine import OrderLine
@@ -14,6 +13,10 @@ from .WeightedVeggie import WeightedVeggie
 from .PackVeggie import PackVeggie
 from .UnitPriceVeggie import UnitPriceVeggie
 from .PremadeBox import PremadeBox
+from datetime import datetime, timedelta
+from sqlalchemy import extract, func
+
+
 
 
 class Staff(Person):
@@ -257,3 +260,138 @@ class Staff(Person):
         except Exception as e:
             db.session.rollback()
             return f"An error occurred while displaying the premade box list: {e}"
+        
+
+    def sales_report(self):
+        """
+        Generate a report for total sales of the week, month, and year.
+        
+        Returns:
+            dict: A dictionary containing total sales for the week, month, and year.
+        """
+        try:
+            # Get current date and define date ranges as date objects only
+            today = datetime.today().date()
+            start_of_week = today - timedelta(days=today.weekday())
+            start_of_month = today.replace(day=1)
+            start_of_year = today.replace(month=1, day=1)
+
+            # Initialize totals
+            weekly_sales = 0
+            monthly_sales = 0
+            yearly_sales = 0
+
+            # Query orders placed this year
+            orders_year = db.session.query(Order).filter(
+                Order.orderDate >= start_of_year
+            ).all()
+            
+            for order in orders_year:
+                order_date = order.orderDate  
+                
+                for order_line in order.listOfItems:
+                    item = order_line.item
+                    quantity = order_line.quantity
+
+                    # Retrieve item price
+                    item_price = item.get_price
+                    total_item_price = item_price * quantity
+
+                    # Add to yearly sales
+                    yearly_sales += total_item_price
+
+                    # Add to monthly and weekly sales if within the date range
+                    if order_date >= start_of_month:
+                        monthly_sales += total_item_price
+                    if order_date >= start_of_week:
+                        weekly_sales += total_item_price
+
+      
+            # Return formatted results
+            return {
+                "weekly_sales": round(weekly_sales, 2),
+                "monthly_sales": round(monthly_sales, 2),
+                "yearly_sales": round(yearly_sales, 2),
+            }
+        
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in sales_report: {e}")
+            return {"error": f"An error occurred while generating the sales report: {e}"}
+        
+    
+    def get_popularity_items(self):
+        """
+        Finds the most popular and least popular item(s) based on the total quantity ordered.
+
+        Returns:
+            dict: A dictionary containing two lists with item details for the most popular and least popular items.
+        """
+        try:
+            # Dictionary to store item popularity
+            item_popularity = {}
+
+            # Retrieve all orders
+            orders = db.session.query(Order).all()
+
+            # Loop through each order and each item in the order
+            for order in orders:
+                for order_line in order.listOfItems:
+                    item = order_line.item  # Retrieve item instance
+                    quantity = order_line.quantity
+
+                    # Update the item popularity count
+                    if item in item_popularity:
+                        item_popularity[item] += quantity
+                    else:
+                        item_popularity[item] = quantity
+
+            # If no orders exist, return empty lists
+            if not item_popularity:
+                return {"most_popular": [], "least_popular": []}
+
+            # Find the maximum and minimum order counts
+            max_quantity = max(item_popularity.values())
+            min_quantity = min(item_popularity.values())
+
+            def item_details(item, quantity):
+
+                if isinstance(item, Veggie):
+                   return {
+                    "item_id": item.id,
+                    "img": item.img_src,  
+                    "quantity": quantity,
+                    "name": item.vegName,  
+                  }
+                if isinstance(item, PremadeBox):
+                   return {
+                    "item_id": item.id,
+                    "img": item.img_src,  
+                    "quantity": quantity,
+                    "name": f"Premade Box - {item.boxContent}",  
+                  }
+
+            # Extract most popular items with details
+            most_popular_items = [
+                item_details(item, quantity)
+                for item, quantity in item_popularity.items()
+                if quantity == max_quantity
+            ]
+
+            # Extract least popular items with details
+            least_popular_items = [
+                item_details(item, quantity)
+                for item, quantity in item_popularity.items()
+                if quantity == min_quantity
+            ]
+
+            
+            return {
+                "most_popular": most_popular_items,
+                "least_popular": least_popular_items,
+            }
+
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error in get_popularity_items: {e}")
+            return {"error": f"An error occurred while calculating popularity items: {e}"}
