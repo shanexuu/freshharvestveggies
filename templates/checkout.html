@@ -41,6 +41,38 @@
         method="POST"
         novalidate=""
       >
+        {% if is_staff %}
+        <!-- Customer Selection Dropdown for Staff -->
+        <h4 class="mb-3">Select Customer</h4>
+        <div class="mb-3">
+          <label
+            for="customerSelect"
+            class="form-label"
+            >Customer</label
+          >
+          <select
+            id="customerSelect"
+            name="customer_id"
+            class="form-select"
+            required
+          >
+            <option
+              value=""
+              selected
+              disabled
+            >
+              Choose a customer...
+            </option>
+            {% for customer in customers %}
+            <option value="{{ customer.id }}">
+              {{ customer.firstName }} - {{ customer.lastName }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="invalid-feedback">Please select a customer.</div>
+        </div>
+        {% endif %}
+
         <h4 class="mb-3">Delivery Method</h4>
         <div class="my-3">
           <div class="form-check">
@@ -77,6 +109,7 @@
           </div>
         </div>
 
+        {% if not is_staff %}
         <h4 class="mb-3">Payment</h4>
         <div class="my-3">
           <div class="form-check">
@@ -195,8 +228,8 @@
             <div class="invalid-feedback">Security code required</div>
           </div>
         </div>
+        {% endif %}
 
-        <!-- Hidden fields to pass dynamic data to the server -->
         <input
           type="hidden"
           id="shippingFeeInput"

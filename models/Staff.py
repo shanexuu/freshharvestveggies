@@ -15,6 +15,7 @@ from .UnitPriceVeggie import UnitPriceVeggie
 from .PremadeBox import PremadeBox
 from datetime import datetime, timedelta
 from sqlalchemy import extract, func
+from datetime import date
 
 
 
@@ -402,22 +403,34 @@ class Staff(Person):
         
         super().add_to_cart(item, quantity)
 
-    def create_order(self, selected_customer_id, cart):
-        """Create an order for the selected customer from the staff member's cart."""
+    def create_order(self, selected_customer_id, cart, delivery_method):
+        """Create an order for the selected customer from the staff member's cart with delivery method."""
         customer = Customer.query.get(selected_customer_id)
         
         if customer is None:
             raise ValueError("Selected customer not found.")
         
-        # Create a new order
-        order = Order(customer_id=selected_customer_id, status='Waiting for Payment')
-        db.session.add(order)
-        db.session.flush()  # Get the order ID
+        # Create a new order with the provided delivery method
+        new_order = Order(
+            customer_id=selected_customer_id,
+            orderDate=date.today(),
+            orderStatus="Waiting for payment",
+            delivery=delivery_method
+        )
         
-        # Insert order lines for each item in the cart
-        for sku, item in cart.items():
-            order_line = OrderLine(order_id=order.id, product_sku=sku, quantity=item['quantity'], price=item['price'])
-            db.session.add(order_line)
+        # Add OrderLine items for each item in the cart
+        for item in cart.values():
+            # Create an OrderLine for each item in the cart with its quantity and item_id
+            order_line = OrderLine(
+                order=new_order,
+                item_id=item['id'],  
+                quantity=item['quantity']
+            )
+            # Append the OrderLine to the order's list of items
+            new_order.listOfItems.append(order_line)
 
-        db.session.commit()  # Commit the transaction
-        return order  # Return the created order    
+        # Add the order to the session and commit the transaction
+        db.session.add(new_order)
+        db.session.commit()  # This saves the order and all related order lines
+
+        return new_order.id  # Return the created order

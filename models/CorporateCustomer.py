@@ -7,6 +7,7 @@ from .AccountPayment import AccountPayment
 from .CreditCardPayment import CreditCardPayment
 from .DebitCardPayment import DebitCardPayment
 from datetime import date
+from flask import Flask, render_template, request, url_for, redirect, session
 
 class CorporateCustomer(Customer):
     __tablename__ = 'corporatecustomer'
@@ -125,6 +126,113 @@ class CorporateCustomer(Customer):
 
         # Return confirmation or order summary with the order ID
         return {"id": new_order.id, "total_amount": payment_amount, "payment_status": "Success"}
-
-
     
+
+    def payment(self, order_id=None, payment_method=None, payment_details=None):
+        """
+        Process payment for the specified order. Validates the order ownership, status,
+        and processes payment details to insert payment info into the database.
+
+        Parameters:
+        - order_id (int): The ID of the order being paid for (None if processing new order).
+        - payment_method (str): The payment method (e.g., "balance", "credit", "debit").
+        - payment_details (dict): Details required to process payment (e.g., card info).
+
+        Returns:
+        - bool: True if payment was successful, False otherwise.
+
+        Raises:
+        - ValueError: If the order is not found or does not belong to this customer,
+        or if the order is not pending payment.
+        """
+        payment_amount = 0.0  # Initialize the payment amount
+
+        
+
+        # If order_id is provided, process payment for an existing order
+        if order_id is not None:
+            # Retrieve the order from the database
+            order = Order.query.get(order_id)
+
+            # Validate that the order exists and belongs to this customer
+            if not order or order.customer_id != self.id:
+                raise ValueError("Order not found or does not belong to this customer.")
+
+            # Check if the order is eligible for payment 
+            if order.orderStatus != 'Waiting for payment':
+                raise ValueError("This order is not pending payment.")
+
+            # Calculate the payment amount based on the order lines
+            order_lines = OrderLine.query.filter_by(order_id=order_id).all()
+            payment_amount = sum(line.item.get_price * line.quantity for line in order_lines)
+
+            # Add delivery fee 
+            if order.delivery == "Delivery":
+                payment_amount += 10.00  
+
+        # Apply corporate discount
+        if isinstance(self, CorporateCustomer):  # Check if the customer is a corporate customer
+            discount = payment_amount * (self.discountRate / 100)  # Calculate discount
+            payment_amount -= discount  # Deduct discount from total amount
+
+        # Check if proceeding with the payment would exceed the corporate customer's max owing
+        if self.custBalance - payment_amount < -self.maxOwing:
+            raise ValueError(f"Cannot proceed with payment: Outstanding balance exceeds allowed maximum of ${self.maxOwing}.")
+
+        # Check if corporate customer's balance exceeds their credit limit
+        if isinstance(self, CorporateCustomer) and self.custBalance + payment_amount > self.maxCredit:
+            raise ValueError(f"Cannot proceed with payment: Outstanding balance exceeds allowed credit limit of ${self.maxCredit}.")
+
+        # Create Payment based on selected payment method
+        payment_date = date.today()
+        payment = None  # Initialize payment variable
+
+        if payment_method == "balance":
+            if self.custBalance >= payment_amount:
+                self.custBalance -= payment_amount
+                payment = AccountPayment(
+                    paymentAmount=payment_amount,
+                    paymentDate=payment_date,
+                    customer_id=self.id
+                )
+            else:
+                raise ValueError("Insufficient account balance for payment.")
+
+        elif payment_method == "credit":
+            payment = CreditCardPayment(
+                paymentAmount=payment_amount,
+                paymentDate=payment_date,
+                customer_id=self.id,
+                nameOncard=request.form.get('nameOnCard'),  
+                cardNumber=request.form.get('cardNumber'),
+                expiration=request.form.get('expiration'),
+                cvv=request.form.get('cvv')
+            )
+
+        elif payment_method == "debit":
+            payment = DebitCardPayment(
+                paymentAmount=payment_amount,
+                paymentDate=payment_date,
+                customer_id=self.id,
+                nameOncard=request.form.get('nameOnCard'),  
+                cardNumber=request.form.get('cardNumber'),
+                expiration=request.form.get('expiration'),
+                cvv=request.form.get('cvv')
+            )
+        
+        else:
+            raise ValueError("Invalid payment method selected.")
+
+        # If processing payment for an existing order, update order status
+        if order_id is not None:
+            order.orderStatus = 'Processing'  
+            db.session.add(payment)     
+
+        # Commit the changes to the database
+        db.session.commit()  
+
+        return True
+
+
+
+        

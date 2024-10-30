@@ -16,7 +16,6 @@
             >
           </div>
         </li>
-
         <li class="list-group-item d-flex justify-content-between lh-sm p-3">
           <div>
             <a
@@ -68,7 +67,7 @@
             <td>{{ order.orderStatus }}</td>
             <td>
               {% if order.orderStatus == 'Processing' %}
-              <!-- Button trigger modal -->
+              <!-- Button trigger modal for cancelling order -->
               <button
                 class="rounded-2"
                 data-bs-toggle="modal"
@@ -77,8 +76,7 @@
               >
                 Cancel order
               </button>
-
-              <!-- Modal -->
+              <!-- Cancel Order Modal -->
               <div
                 class="modal fade"
                 id="cancelModal{{ order.id }}"
@@ -128,6 +126,18 @@
                   </div>
                 </div>
               </div>
+              {% endif %} {% if order.orderStatus == 'Waiting for payment' %}
+              <a
+                href="{{ url_for('make_payment', order_id=order.id) }}"
+                class=""
+              >
+                <button
+                  class="rounded-2"
+                  style="padding: 0rem 1rem"
+                >
+                  Pay Now
+                </button>
+              </a>
               {% endif %}
             </td>
           </tr>

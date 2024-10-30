@@ -16,6 +16,7 @@ from models.Staff import Staff
 from models.Customer import Customer
 from models.CorporateCustomer import CorporateCustomer
 from models.Order import Order
+from models.OrderLine import OrderLine
 import json
 
 
@@ -223,22 +224,39 @@ def checkout():
 
     name = session.get('firstName')
     user_type = session.get('type')
+    is_staff = user_type == 'staff'  # Boolean to indicate if the user is staff
 
     cart = session.get('cart', {})
     subtotal = sum(item['price'] * item['quantity'] for item in cart.values())
 
+    # Retrieve customer list if the user is a staff member
+    customers = Customer.query.all() if is_staff else None
+
     # Handle POST request for processing the checkout
     if request.method == 'POST':
-        customer_id = session.get('id')
+        # For staff, fetch selected customer and delivery method
+        if is_staff:
+            customer_id = request.form.get('customer_id')
+            delivery_method = request.form.get('deliveryMethod')
+            customer = Customer.query.get(customer_id)
+            if not customer:
+                flash("Please select a valid customer.")
+                return redirect(url_for('checkout'))
+            
+            # Create the order (assuming `create_order` handles staff orders without payment)
+            staff_id = session.get('id')
+            staff_member = Staff.query.get(staff_id)
+            order_id = staff_member.create_order(customer_id, cart, delivery_method)
+            session.pop('cart', None)
+            return redirect(url_for('confirmation', order_id=order_id))
         
-        # Fetch the customer from the database
-        customer = Customer.query.get(customer_id)  
-        corporate = CorporateCustomer.query.get(customer_id)
+        # For regular customers, handle as usual
+        customer_id = session.get('id')
+        customer = Customer.query.get(customer_id)
         if customer is None:
             flash("Customer not found. Please log in again.")
-            return redirect(url_for('index'))  # Redirect to the home page
+            return redirect(url_for('index'))
 
-        # Define parameters for the checkout function
         delivery_method = request.form.get('deliveryMethod')
         payment_method = request.form.get('paymentMethod')
         payment_details = {
@@ -249,22 +267,16 @@ def checkout():
         }
 
         try:
-            # Call the appropriate checkout method based on user type
-            if user_type == 'customer':
-                order_summary = customer.checkout(cart, delivery_method, payment_method, payment_details)
-            elif user_type == 'corporatecustomer':
-                order_summary = corporate.checkout(cart, delivery_method, payment_method, payment_details) 
-            # Redirect to the confirmation page with the order summary
+            order_summary = customer.checkout(cart, delivery_method, payment_method, payment_details)
             session.pop('cart', None)
             return redirect(url_for('confirmation', order_id=order_summary['id']))
-
         except ValueError as e:
-            # Handle errors such as insufficient balance or invalid payment method
             flash(str(e))
-            return render_template('checkout.html', name=name, cart=cart, subtotal=subtotal)
+            return render_template('checkout.html', name=name, cart=cart, subtotal=subtotal, customers=customers, is_staff=is_staff)
 
     # If GET request, render the checkout page
-    return render_template('checkout.html', name=name, cart=cart, subtotal=subtotal, shipping_fee=0.00)
+    return render_template('checkout.html', name=name, cart=cart, subtotal=subtotal, customers=customers, is_staff=is_staff)
+
 
 
 
@@ -302,6 +314,56 @@ def dashboard():
           return render_template('corporate-dashboard.html', name=name, order_history = order_history)
       
     return redirect(url_for('index'))      
+
+
+@app.route("/make_payment/<int:order_id>", methods=["GET", "POST"])
+def make_payment(order_id):
+    
+
+    customer_id = session.get('id')
+    customer = Customer.query.get(customer_id)
+    corporate = CorporateCustomer.query.get(customer_id)
+    user_type = session.get('type') 
+
+    # Handle POST request to process the payment
+    if request.method == "POST":
+        payment_method = request.form.get('paymentMethod')
+
+        # Calculate the payment amount based on the order's order lines
+        order_lines = OrderLine.query.filter_by(order_id=order_id).all()
+        payment_amount = sum(line.item.get_price * line.quantity for line in order_lines)  # Use get_price to access price
+
+        # Collect additional payment details if necessary
+        payment_details = {}
+        if payment_method in ["credit", "debit"]:
+            payment_details['nameOnCard'] = request.form.get('nameOnCard')
+            payment_details['cardNumber'] = request.form.get('cardNumber')
+            payment_details['expiration'] = request.form.get('expiration')
+            payment_details['cvv'] = request.form.get('cvv')
+
+        try:
+
+            if user_type == 'customer':
+                payment_successful = customer.payment(order_id, payment_method, payment_details)
+                if payment_successful:
+                    flash("Payment successful! Thank you.")
+                else:
+                    flash("Payment failed. Please try again.")
+            elif user_type == 'corporatecustomer':
+                payment_successful = corporate.payment(order_id, payment_method, payment_details)
+                if payment_successful:
+                    flash("Payment successful! Thank you.")
+                else:
+                    flash("Payment failed. Please try again.")
+        except ValueError as e:
+            flash(str(e))
+
+        return redirect(url_for('dashboard'))
+
+    # Handle GET request to render the payment page
+    return render_template('payment.html', order_id=order_id)
+
+
 
 
 

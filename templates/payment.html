@@ -1,0 +1,153 @@
+{% extends 'base-full.html' %} {% block content %}
+<div
+  class="container-sm mt-5"
+  style="max-width: 500px; margin: 0 auto"
+>
+  <div class="py-5 text-center">
+    <h1>Payment</h1>
+  </div>
+
+  <form
+    action="{{ url_for('make_payment', order_id=order_id) }}"
+    method="POST"
+    class="needs-validation"
+    novalidate=""
+  >
+    <h5 class="mb-3">Select Payment Method</h5>
+    <div class="my-3">
+      <div class="form-check">
+        <input
+          id="balance"
+          name="paymentMethod"
+          type="radio"
+          class="form-check-input"
+          value="balance"
+          required
+          onclick="toggleCardInfo(false)"
+        />
+        <label
+          class="form-check-label"
+          for="balance"
+          >Pay with Account Balance</label
+        >
+      </div>
+      <div class="form-check">
+        <input
+          id="credit"
+          name="paymentMethod"
+          type="radio"
+          class="form-check-input"
+          value="credit"
+          required
+          onclick="toggleCardInfo(true)"
+        />
+        <label
+          class="form-check-label"
+          for="credit"
+          >Credit Card</label
+        >
+      </div>
+      <div class="form-check">
+        <input
+          id="debit"
+          name="paymentMethod"
+          type="radio"
+          class="form-check-input"
+          value="debit"
+          required
+          onclick="toggleCardInfo(true)"
+        />
+        <label
+          class="form-check-label"
+          for="debit"
+          >Debit Card</label
+        >
+      </div>
+    </div>
+
+    <div
+      class="row gy-3"
+      id="cardInfoFields"
+      style="display: none"
+    >
+      <div class="col-md-6">
+        <label
+          for="cc-name"
+          class="form-label"
+          >Name on Card</label
+        >
+        <input
+          type="text"
+          class="form-control"
+          id="cc-name"
+          name="nameOnCard"
+          required
+        />
+        <div class="invalid-feedback">Name on card is required</div>
+      </div>
+      <div class="col-md-6">
+        <label
+          for="cc-number"
+          class="form-label"
+          >Card Number</label
+        >
+        <input
+          type="text"
+          class="form-control"
+          id="cc-number"
+          name="cardNumber"
+          required
+        />
+        <div class="invalid-feedback">Card number is required</div>
+      </div>
+      <div class="col-md-3">
+        <label
+          for="cc-expiration"
+          class="form-label"
+          >Expiration</label
+        >
+        <input
+          type="text"
+          class="form-control"
+          id="cc-expiration"
+          name="expiration"
+          required
+        />
+        <div class="invalid-feedback">Expiration date required</div>
+      </div>
+      <div class="col-md-3">
+        <label
+          for="cc-cvv"
+          class="form-label"
+          >CVV</label
+        >
+        <input
+          type="text"
+          class="form-control"
+          id="cc-cvv"
+          name="cvv"
+          required
+        />
+        <div class="invalid-feedback">Security code required</div>
+      </div>
+    </div>
+
+    <button
+      type="submit"
+      class="w-100 btn-lg rounded-2 mt-4"
+    >
+      Pay Now
+    </button>
+  </form>
+</div>
+
+<script>
+  function toggleCardInfo(show) {
+    const cardInfoFields = document.getElementById('cardInfoFields')
+    cardInfoFields.style.display = show ? 'flex' : 'none'
+  }
+
+  // Initialize visibility
+  toggleCardInfo(false) // Hide card info fields initially
+</script>
+{% endblock %}
