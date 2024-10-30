@@ -48,7 +48,15 @@
       </tr>
     </tfoot>
   </table>
-  <div class="text-end"><button>Checkout</button></div>
+  <!-- Checkout Form -->
+  <form
+    method="POST"
+    action="{{ url_for('checkout') }}"
+  >
+    <div class="text-end">
+      <button type="submit">Checkout</button>
+    </div>
+  </form>
 
   {% else %}
   <div class="text-center"><h4>Your cart is empty.</h4></div>

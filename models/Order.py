@@ -16,16 +16,19 @@ from sqlalchemy.orm import sessionmaker
 class Order(db.Model):
     __tablename__ = 'order'
     id = Column(Integer, primary_key=True)
-    customer_id = Column(Integer, ForeignKey('customer.id'))
+    customer_id = Column(Integer, ForeignKey('customer.id'), nullable=False)
     orderDate = Column(Date)
     orderStatus = Column(String(50))
+    delivery = Column(String(255))
     customer = relationship("Customer", back_populates="orders")
     listOfItems = relationship("OrderLine", back_populates="order")
 
-    def __init__(self, orderCustomer, orderDate=date.today(), orderStatus="Processing"):
-        self.orderCustomer = orderCustomer
+
+    def __init__(self, customer_id, orderDate, orderStatus, delivery):
+        self.customer_id = customer_id
         self.orderDate = orderDate
         self.orderStatus = orderStatus
+        self.delivery = delivery
 
     #Method to display order details for a customer
     @classmethod

@@ -69,6 +69,18 @@ button {
   border: none;
   cursor: pointer;
 }
+
+.button-yellow-sm {
+  background-color: #e1e686;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0rem;
+  padding-bottom: 0rem;
+  color: #2d2f0c;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
 .form-signin {
   max-width: 330px;
   padding: 1rem;
@@ -135,4 +147,12 @@ input {
   padding: 0.5rem;
   border: #2d2f0c 1px solid;
   border-radius: 5px;
+}
+.badge {
+  background-color: #2d2f0c;
+  color: #e1e686;
+}
+.form-check-input:checked {
+  background-color: #2d2f0c !important;
+  border-color: #2d2f0c !important;
 }

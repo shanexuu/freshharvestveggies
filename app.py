@@ -16,6 +16,7 @@ from models.Staff import Staff
 from models.Customer import Customer
 from models.CorporateCustomer import CorporateCustomer
 from models.Order import Order
+import json
 
 
 
@@ -147,13 +148,12 @@ def premabox_details(id):
     # Fetch the veggie by id
     premadebox = PremadeBox.query.get_or_404(id)
 
-    return render_template('premadebox-details.html', premadebox=premadebox)
+    return render_template('premadebox-details.html', premadebox=premadebox, name=name)
 
 
 @app.route("/cart")
 def cart():
     name = session.get('firstName')
-
     cart = session.get('cart', {})
     
     # Calculate subtotal
@@ -165,34 +165,38 @@ def cart():
 
 @app.route('/add-to-cart', methods=['POST'])
 def add_to_cart():
-    item_id = request.form.get('item_id')
-    item_name = request.form.get('item_name')
-    item_price = float(request.form.get('item_price'))
+
+    user_id = session.get('id')
+    item_id = str(request.form.get('item_id'))
     item_quantity = int(request.form.get('quantity', 1))
 
-    # Initialize the cart in session if it doesn't exist
-    if 'cart' not in session:
-        session['cart'] = {}
 
-    # Access the cart from the session
-    cart = session['cart']
+    if 'loggedin' in session:
+        current_user = Person.query.get(user_id)
+        item = Item.query.get(item_id)
+        if not current_user:
+           flash("User not found.", "error")
+            
+        if not item:
+          flash("Item not found.", "error")
+          return redirect(url_for('cart'))
+        try:
+           current_user.add_to_cart(item, item_quantity)
+            
+        except Exception as e:
+            flash(f"Error adding item to cart: {e}", "error")
 
-    # If the item is already in the cart, update its quantity
-    if item_id in cart:
-        cart[item_id]['quantity'] += item_quantity
+
+        print(f"Item ID: {item_id}, Item Quantity: {item_quantity}, User ID: {user_id}")
+        print(f"Current User: {current_user}")
+        print(f"Item: {item}")
+        return redirect(url_for('cart'))
+        
+
+       
     else:
-        # Otherwise, add the item with its details
-        cart[item_id] = {
-            'name': item_name,
-            'price': item_price,
-            'quantity': item_quantity,
-            'img': request.form.get('img_src', '')  
-        }
+        return redirect(url_for('login'))
 
-    # Save the updated cart back to session
-    session['cart'] = cart
-
-    return redirect(url_for('cart'))
 
 @app.route('/order/<int:id>/', methods=['GET', 'POST'])
 def order_details(id):
@@ -212,8 +216,69 @@ def order_details(id):
       
     return redirect(url_for('index')) 
 
+@app.route('/checkout', methods=['GET', 'POST'])
+def checkout():
+    if 'loggedin' not in session:
+        return redirect(url_for('index'))  # Redirect if not logged in
 
-   
+    name = session.get('firstName')
+    user_type = session.get('type')
+
+    cart = session.get('cart', {})
+    subtotal = sum(item['price'] * item['quantity'] for item in cart.values())
+
+    # Handle POST request for processing the checkout
+    if request.method == 'POST':
+        customer_id = session.get('id')
+        
+        # Fetch the customer from the database
+        customer = Customer.query.get(customer_id)  
+        corporate = CorporateCustomer.query.get(customer_id)
+        if customer is None:
+            flash("Customer not found. Please log in again.")
+            return redirect(url_for('index'))  # Redirect to the home page
+
+        # Define parameters for the checkout function
+        delivery_method = request.form.get('deliveryMethod')
+        payment_method = request.form.get('paymentMethod')
+        payment_details = {
+            'nameOnCard': request.form.get('nameOnCard'),
+            'cardNumber': request.form.get('cardNumber'),
+            'expiration': request.form.get('expiration'),
+            'cvv': request.form.get('cvv')
+        }
+
+        try:
+            # Call the appropriate checkout method based on user type
+            if user_type == 'customer':
+                order_summary = customer.checkout(cart, delivery_method, payment_method, payment_details)
+            elif user_type == 'corporatecustomer':
+                order_summary = corporate.checkout(cart, delivery_method, payment_method, payment_details) 
+            # Redirect to the confirmation page with the order summary
+            session.pop('cart', None)
+            return redirect(url_for('confirmation', order_id=order_summary['id']))
+
+        except ValueError as e:
+            # Handle errors such as insufficient balance or invalid payment method
+            flash(str(e))
+            return render_template('checkout.html', name=name, cart=cart, subtotal=subtotal)
+
+    # If GET request, render the checkout page
+    return render_template('checkout.html', name=name, cart=cart, subtotal=subtotal, shipping_fee=0.00)
+
+
+
+@app.route('/confirmation/<int:order_id>')
+def confirmation(order_id):
+    
+    # Fetch the order details using the order_id
+    order = Order.query.get(order_id)
+
+    if not order:
+        flash("Order not found.")
+        return redirect(url_for('index'))
+
+    return render_template('order_confirmation.html', order=order)
 
 @app.route("/dashboard")
 def dashboard():

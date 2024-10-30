@@ -12,9 +12,6 @@ class Veggie(Item):
     unit = Column(String(50))
     price = Column(Float)
 
-    
-    
-
     __mapper_args__ = {
         'polymorphic_on': vegType, 
         'polymorphic_identity': 'veggie',

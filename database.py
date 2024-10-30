@@ -91,11 +91,19 @@ class OrderLine(Base):
 class Order(Base):
     __tablename__ = 'order'
     id = Column(Integer, primary_key=True)
-    customer_id = Column(Integer, ForeignKey('customer.id'))
+    customer_id = Column(Integer, ForeignKey('customer.id'), nullable=False)
     orderDate = Column(Date)
     orderStatus = Column(String(50))
+    delivery = Column(String(255))
     customer = relationship('Customer', back_populates='orders')
     listOfItems = relationship("OrderLine", back_populates="order")
+
+    def __init__(self, customer_id, orderDate, orderStatus, delivery):
+        self.customer_id = customer_id
+        self.orderDate = orderDate
+        self.orderStatus = orderStatus
+        self.delivery = delivery
+
 
 
 
@@ -162,8 +170,20 @@ class Payment(Base):
     id = Column(Integer, primary_key=True)
     paymentAmount = Column(Float)
     paymentDate = Column(Date)
-    paymentID = Column(Integer)
     customer_id = Column(Integer, ForeignKey('customer.id'))
+    type = Column(String(50))
+
+    __mapper_args__ = {
+        'polymorphic_on': type,  
+        'polymorphic_identity': 'payment' 
+    }
+    def __init__(self, paymentAmount, paymentDate,customer_id):
+        self.paymentAmount = paymentAmount
+        self.paymentDate = paymentDate
+        self.customer_id = customer_id
+     
+
+
 
 class CorporateCustomer(Customer):
     __tablename__ = 'corporatecustomer'
@@ -183,18 +203,59 @@ class CorporateCustomer(Customer):
         self.maxCredit = maxCredit
         self.minBalance = minBalance
 
+
+class AccountPayment(Payment):
+    __tablename__ = 'accountpayment'
+    id = Column(Integer, ForeignKey('payment.id'), primary_key=True)
+    
+    __mapper_args__ = {
+        'polymorphic_identity': 'accountpayment',
+    }
+
+    def __init__(self, paymentAmount, paymentDate,customer_id):
+        super().__init__(paymentAmount=paymentAmount, paymentDate=paymentDate, customer_id=customer_id)
+        self.type = 'accountpayment'
+        
+
 class CreditCardPayment(Payment):
     __tablename__ = 'creditcardpayment'
     id = Column(Integer, ForeignKey('payment.id'), primary_key=True)
-    cardExpiryDate = Column(Date)
-    cardNumber = Column(String(50))
-    cardType = Column(String(50))
+    nameOncard = Column(String(50))
+    cardNumber = Column(String(255))
+    expiration = Column(String(50))
+    cvv = Column(Integer)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'creditcardpayment',
+    }
+
+    def __init__(self, paymentAmount, paymentDate,customer_id, nameOncard, cardNumber, expiration, cvv):
+        super().__init__(paymentAmount=paymentAmount, paymentDate=paymentDate, customer_id=customer_id)
+        self.type = 'creditcardpayment'
+        self.nameOncard = nameOncard
+        self.cardNumber = cardNumber
+        self.expiration = expiration
+        self.cvv = cvv
 
 class DebitCardPayment(Payment):
     __tablename__ = 'debitcardpayment'
     id = Column(Integer, ForeignKey('payment.id'), primary_key=True)
-    bankName = Column(String(50))
-    debitCardNumber = Column(String(50))
+    nameOncard = Column(String(50))
+    cardNumber = Column(String(255))
+    expiration = Column(String(50))
+    cvv = Column(Integer)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'debitcardpayment',
+    }
+
+    def __init__(self, paymentAmount, paymentDate,customer_id, nameOncard, cardNumber, expiration, cvv):
+        super().__init__(paymentAmount=paymentAmount, paymentDate=paymentDate, customer_id=customer_id)
+        self.type = 'debitcardpayment'
+        self.nameOncard = nameOncard
+        self.cardNumber = cardNumber
+        self.expiration = expiration
+        self.cvv = cvv
 
 class WeightedVeggie(Veggie):
     __tablename__ = 'weightedveggie'
@@ -257,9 +318,9 @@ session = Session()
 
 staff1 = Staff(firstName="Alice", lastName="Johnson", password="1234", username="alicej", dateJoined=date(2022, 1, 15), deptName="Sales",staffID=1)
 
-customer1 = Customer(firstName="Bob", lastName="Brown", password="1234", username="bobb", custAddress="123 Main St", custBalance=100.0, maxOwing=50.0)
+customer1 = Customer(firstName="Bob", lastName="Brown", password="1234", username="bobb", custAddress="123 Main St 1010", custBalance=100.0, maxOwing=50.0)
 
-corporate_customer1 = CorporateCustomer(firstName="Shane", lastName="Xu", password="1234", username="foliageandvine", custAddress="456 Corporate Blvd", custBalance=500.0,maxOwing=200.0, discountRate=10.0, maxCredit=1000.0, minBalance=50.0)
+corporate_customer1 = CorporateCustomer(firstName="Shane", lastName="Xu", password="1234", username="foliageandvine", custAddress="456 Corporate Blvd 1010", custBalance=500.0,maxOwing=200.0, discountRate=10.0, maxCredit=1000.0, minBalance=50.0)
 
 
 premade_box1 = PremadeBox(img_src="images/PremadeBox.jpg", boxSize="Small", numOfBoxes=10, boxContent="Carrots, Potatoes", price = 19.99)
@@ -273,16 +334,8 @@ unit_price_veggie3 = UnitPriceVeggie(img_src="images/Avocado.jpg",vegName="Avoca
 
 
 
-
-# Add test data for Payments and Payment types
-payment1 = Payment(paymentAmount=100.0, paymentDate=date(2024, 10, 21), paymentID=1, customer_id=customer1.id)
-credit_card_payment1 = CreditCardPayment(paymentAmount=100.0, paymentDate=date(2024, 10, 28), paymentID=2, customer_id=customer1.id, cardExpiryDate=date(2025, 12, 31), cardNumber="1234567890123456", cardType="Visa")
-
-debit_card_payment1 = DebitCardPayment(paymentAmount=150.0, paymentDate=date(2023, 6, 15), paymentID=3,customer_id=corporate_customer1.id, bankName="Bank XYZ", debitCardNumber="9876543210987654")
-
 # Add all the objects to the session
-session.add_all([staff1, customer1, corporate_customer1, premade_box1, weighted_veggie1, weighted_veggie2, pack_veggie1, unit_price_veggie1, unit_price_veggie2, unit_price_veggie3, payment1, credit_card_payment1, debit_card_payment1
-])
+session.add_all([staff1, customer1, corporate_customer1, premade_box1, weighted_veggie1, weighted_veggie2, pack_veggie1, unit_price_veggie1, unit_price_veggie2, unit_price_veggie3])
 
 session.commit()
 
@@ -292,8 +345,8 @@ orderline2 = OrderLine(quantity=2, item_id=pack_veggie1.id)
 orderline3 = OrderLine(quantity=10, item_id=unit_price_veggie1.id)
 
 # Create Orders
-order1 = Order(customer_id=customer1.id, orderDate=date(2024, 10, 21),  orderStatus="Processing")
-order2 = Order(customer_id=corporate_customer1.id, orderDate=date(2024, 10, 28),  orderStatus="Fulfilled")
+order1 = Order(customer_id=customer1.id, orderDate=date(2024, 10, 21),  orderStatus="Processing", delivery = "Pickup")
+order2 = Order(customer_id=corporate_customer1.id, orderDate=date(2024, 10, 28),  orderStatus="Fulfilled", delivery = "Delivery")
 
 
 # Add order lines to orders
@@ -305,7 +358,12 @@ order2.listOfItems.append(orderline3)
 customer1.orders.append(order1)
 corporate_customer1.orders.append(order2)
 
-session.add_all([order1, order2, orderline1, orderline2, orderline3 ])
+
+
+account_payment1 = AccountPayment(paymentAmount=100.0, paymentDate=date(2024, 10, 28), customer_id=customer1.id)
+debit_card_payment1 = DebitCardPayment(paymentAmount=150.0, paymentDate=date(2024, 10, 29), customer_id=corporate_customer1.id, nameOncard="ShaneX", cardNumber="2323232323333", expiration="03/30", cvv=422)
+
+session.add_all([order1, order2, orderline1, orderline2, orderline3, account_payment1, debit_card_payment1])
 
 # Commit the session to save the objects to the database
 session.commit()

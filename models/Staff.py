@@ -40,6 +40,7 @@ class Staff(Person):
         self.premadeBoxes =[]
         self.veggies = []
         self.type = 'staff'
+        self.cart = []
 
         
    
@@ -395,3 +396,28 @@ class Staff(Person):
             db.session.rollback()
             print(f"Error in get_popularity_items: {e}")
             return {"error": f"An error occurred while calculating popularity items: {e}"}
+    
+
+    def add_to_cart(self, item, quantity):
+        
+        super().add_to_cart(item, quantity)
+
+    def create_order(self, selected_customer_id, cart):
+        """Create an order for the selected customer from the staff member's cart."""
+        customer = Customer.query.get(selected_customer_id)
+        
+        if customer is None:
+            raise ValueError("Selected customer not found.")
+        
+        # Create a new order
+        order = Order(customer_id=selected_customer_id, status='Waiting for Payment')
+        db.session.add(order)
+        db.session.flush()  # Get the order ID
+        
+        # Insert order lines for each item in the cart
+        for sku, item in cart.items():
+            order_line = OrderLine(order_id=order.id, product_sku=sku, quantity=item['quantity'], price=item['price'])
+            db.session.add(order_line)
+
+        db.session.commit()  # Commit the transaction
+        return order  # Return the created order    

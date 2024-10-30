@@ -1,24 +1,25 @@
-from Payment import Payment
+from .Payment import Payment
+
+from sqlalchemy import Column, Integer, String,ForeignKey, Float, Date
+
 
 class DebitCardPayment(Payment):
-    def __init__(self, amount: float, card_number: str, expiry_date: str, cvv: str) -> None:
-        """
-        Initialize a debit card payment.
-        :param amount: Payment amount
-        :param card_number: Debit card number
-        :param expiry_date: Expiry date of the debit card
-        :param cvv: CVV code of the debit card
-        """
-        super().__init__(amount)
-        self.__card_number = card_number
-        self.__expiry_date = expiry_date
-        self.__cvv = cvv
 
-    def process_payment(self) -> bool:
-        """
-        Process the debit card payment.
-        For this example, we assume all payments are successful.
-        :return: True if the payment is successful
-        """
-        print(f"Processing debit card payment of {self.amount}")
-        return True
+    __tablename__ = 'debitcardpayment'
+    id = Column(Integer, ForeignKey('payment.id'), primary_key=True)
+    nameOncard = Column(String(50))
+    cardNumber = Column(String(255))
+    expiration = Column(String(50))
+    cvv = Column(Integer)
+
+    __mapper_args__ = {
+        'polymorphic_identity': 'debitcardpayment',
+    }
+
+    def __init__(self, paymentAmount, paymentDate,customer_id, nameOncard, cardNumber, expiration, cvv):
+        super().__init__(paymentAmount=paymentAmount, paymentDate=paymentDate, customer_id=customer_id)
+        self.type = 'debitcardpayment'
+        self.nameOncard = nameOncard
+        self.cardNumber = cardNumber
+        self.expiration = expiration
+        self.cvv = cvv

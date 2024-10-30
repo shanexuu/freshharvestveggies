@@ -1,0 +1,254 @@
+{% extends 'base-full.html' %} {% block content %}
+<div class="container mt-5">
+  <div class="py-5 text-center">
+    <h1>Checkout</h1>
+  </div>
+  <div class="row g-5">
+    <div class="col-md-5 col-lg-4 order-md-last">
+      <h4 class="d-flex justify-content-between align-items-center mb-3">
+        <span class="h5">Your cart</span>
+        <span class="badge rounded-pill">{{ cart|length }}</span>
+      </h4>
+      <ul class="list-group mb-3">
+        {% for item in cart.values() %}
+        <li class="list-group-item d-flex justify-content-between lh-sm">
+          <div>
+            <h6 class="my-0">{{ item.name }} * {{ item.quantity }}</h6>
+            <small class="text-body-secondary">{{ item.description }}</small>
+          </div>
+          <span class="text-body-secondary">${{ item.price | round(2) }}</span>
+        </li>
+        {% endfor %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>Subtotal</span>
+          <strong id="cartTotal">${{ subtotal | round(2) }}</strong>
+        </li>
+        <li class="list-group-item d-flex justify-content-between">
+          <span>Shipping Fee</span>
+          <strong id="shippingFee">$0.00</strong>
+        </li>
+        <li class="list-group-item d-flex justify-content-between">
+          <span>Total NZ$ (Incl. GST)</span>
+          <strong id="totalAmount">${{ subtotal | round(2) }}</strong>
+        </li>
+      </ul>
+    </div>
+
+    <div class="col-md-7 col-lg-8">
+      <form
+        class="needs-validation"
+        action="{{ url_for('checkout') }}"
+        method="POST"
+        novalidate=""
+      >
+        <h4 class="mb-3">Delivery Method</h4>
+        <div class="my-3">
+          <div class="form-check">
+            <input
+              id="pickup"
+              name="deliveryMethod"
+              type="radio"
+              class="form-check-input"
+              value="Pickup"
+              required
+              onclick="updateTotal()"
+            />
+            <label
+              class="form-check-label"
+              for="pickup"
+              >Pickup</label
+            >
+          </div>
+          <div class="form-check">
+            <input
+              id="delivery"
+              name="deliveryMethod"
+              type="radio"
+              class="form-check-input"
+              value="Delivery"
+              required
+              onclick="updateTotal()"
+            />
+            <label
+              class="form-check-label"
+              for="delivery"
+              >Delivery</label
+            >
+          </div>
+        </div>
+
+        <h4 class="mb-3">Payment</h4>
+        <div class="my-3">
+          <div class="form-check">
+            <input
+              id="credit"
+              name="paymentMethod"
+              type="radio"
+              class="form-check-input"
+              value="credit"
+              required
+              onclick="toggleCardInfo(true)"
+            />
+            <label
+              class="form-check-label"
+              for="credit"
+              >Credit card</label
+            >
+          </div>
+          <div class="form-check">
+            <input
+              id="debit"
+              name="paymentMethod"
+              type="radio"
+              class="form-check-input"
+              value="debit"
+              required
+              onclick="toggleCardInfo(true)"
+            />
+            <label
+              class="form-check-label"
+              for="debit"
+              >Debit card</label
+            >
+          </div>
+          <div class="form-check">
+            <input
+              id="balance"
+              name="paymentMethod"
+              type="radio"
+              class="form-check-input"
+              value="balance"
+              required
+              onclick="toggleCardInfo(false)"
+            />
+            <label
+              class="form-check-label"
+              for="balance"
+              >Pay with account balance</label
+            >
+          </div>
+        </div>
+
+        <div
+          class="row gy-3"
+          id="cardInfoFields"
+          style="display: none"
+        >
+          <div class="col-md-6">
+            <label
+              for="cc-name"
+              class="form-label"
+              >Name on card</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="cc-name"
+              name="nameOnCard"
+              required
+            />
+            <div class="invalid-feedback">Name on card is required</div>
+          </div>
+          <div class="col-md-6">
+            <label
+              for="cc-number"
+              class="form-label"
+              >Credit card number</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="cc-number"
+              name="cardNumber"
+              required
+            />
+            <div class="invalid-feedback">Credit card number is required</div>
+          </div>
+          <div class="col-md-3">
+            <label
+              for="cc-expiration"
+              class="form-label"
+              >Expiration</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="cc-expiration"
+              name="expiration"
+              required
+            />
+            <div class="invalid-feedback">Expiration date required</div>
+          </div>
+          <div class="col-md-3">
+            <label
+              for="cc-cvv"
+              class="form-label"
+              >CVV</label
+            >
+            <input
+              type="text"
+              class="form-control"
+              id="cc-cvv"
+              name="cvv"
+              required
+            />
+            <div class="invalid-feedback">Security code required</div>
+          </div>
+        </div>
+
+        <!-- Hidden fields to pass dynamic data to the server -->
+        <input
+          type="hidden"
+          id="shippingFeeInput"
+          name="shippingFee"
+          value="0.00"
+        />
+        <input
+          type="hidden"
+          id="totalAmountInput"
+          name="totalAmount"
+          value="{{ subtotal | round(2) }}"
+        />
+        <hr class="my-4" />
+
+        <button
+          class="w-100 btn-lg rounded-2"
+          type="submit"
+        >
+          Continue to checkout
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleCardInfo(show) {
+    const cardInfoFields = document.getElementById('cardInfoFields');
+    cardInfoFields.style.display = show ? 'flex' : 'none';
+  }
+
+  function updateTotal() {
+    const subtotal = {{ subtotal | round(2) }};
+    const shippingFeeElement = document.getElementById('shippingFee');
+    const totalAmountElement = document.getElementById('totalAmount');
+    const shippingFeeInput = document.getElementById('shippingFeeInput');
+    const totalAmountInput = document.getElementById('totalAmountInput');
+
+    let shippingFee = 0;
+    if (document.getElementById('delivery').checked) {
+      shippingFee = 10.00;  // Set delivery fee
+    }
+
+    shippingFeeElement.innerText = `$${shippingFee.toFixed(2)}`;
+    const totalAmount = subtotal + shippingFee;
+    totalAmountElement.innerText = `$${totalAmount.toFixed(2)}`;
+    shippingFeeInput.value = shippingFee.toFixed(2);
+    totalAmountInput.value = totalAmount.toFixed(2);
+  }
+
+  // Initialize visibility and totals
+  toggleCardInfo(false); // Hide card info fields initially
+  updateTotal(); // Initialize total
+</script>
+{% endblock %}
