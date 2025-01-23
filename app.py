@@ -27,7 +27,7 @@ app = Flask(__name__)
 
 app.secret_key = os.urandom(24)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:wsXY6205506@localhost:3306/fresh_harvest_veggies_db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:password/fresh_harvest_veggies_db'
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
